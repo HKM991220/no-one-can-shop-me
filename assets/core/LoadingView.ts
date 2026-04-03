@@ -3,7 +3,7 @@ import {_decorator, Button, Component, Label} from 'cc';
 const {ccclass, menu, property} = _decorator;
 
 
-@ccclass('Loading')
+@ccclass('LoadingView')
 export default class Loading extends Component {
     @property(Label)
     protected tipsLabel: Label | null = null;

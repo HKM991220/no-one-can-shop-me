@@ -7,6 +7,7 @@
  * @LastEditTime: 2025-07-22
  */
 import {_decorator, AudioClip, AudioSource, Color, Component, Node, Sprite, tween, UIOpacity, UITransform} from 'cc';
+import {GameAudioSettings} from '../common/AudioSetting';
 
 const {ccclass, menu, property} = _decorator;
 
@@ -45,7 +46,11 @@ export default class SoundComp extends Component {
         if (!this.audioSource || !clip) {
             return;
         }
-        this.audioSource.playOneShot(clip, volumeScale);
+        const scale = GameAudioSettings.getSfxPlayScale(volumeScale ?? 1);
+        if (scale <= 0) {
+            return;
+        }
+        this.audioSource.playOneShot(clip, scale);
     }
 
 

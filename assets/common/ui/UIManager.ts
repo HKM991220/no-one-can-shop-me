@@ -39,6 +39,13 @@ export class UIManager extends Component {
     private readonly stack: string[] = [];
 
     /**
+     * 由 GameBootstrap 在常驻根下创建后绑定；未走启动流程时仍可懒创建独立常驻节点。
+     */
+    public static bindInstance(inst: UIManager): void {
+        this._instance = inst;
+    }
+
+    /**
      * 全局单例
      * 挂到常驻节点，保证切场景后依旧可用
      */

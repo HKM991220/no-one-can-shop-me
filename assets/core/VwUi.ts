@@ -6,21 +6,20 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2024-08-08
  */
-import {_decorator, Component, Label, Button, Sprite} from 'cc';
-import { CwgStateInfo } from './CwgState';
-import { VwFunland } from './VwFunland';
+import {_decorator, Component, Label, Button, Node, Sprite} from 'cc';
+import {CwgStateInfo} from './CwgState';
+import {VwFunland} from './VwFunland';
 import EventMng from '../common/EventMng';
-import { VwExchange } from './prop-anims/VwExchange';
-import { VwAddGlass } from './prop-anims/VwAddGlass';
-import { UIManager } from '../common/ui/UIManager';
+import {VwExchange} from './prop-anims/VwExchange';
+import {VwAddGlass} from './prop-anims/VwAddGlass';
+import {UIId} from '../common/Enum';
+import {attachGameWorld, detachGameWorld, UI} from '../common/ui/UIService';
 
 const {ccclass, menu, property} = _decorator;
 
 @ccclass('VwUi')
 @menu('cwg/VwUi')
 export class VwUi extends Component {
-    private static readonly UI_ID_EXCHANGE = 'exchange';
-    private static readonly UI_ID_ADD_EMPTY_GLASS = 'addEmptyGlass';
     private static readonly GLASS_CAPACITY = 4;
 
     @property(Label)
@@ -32,19 +31,42 @@ export class VwUi extends Component {
     @property(Button)
     protected undoButton: Button;
 
+    /** 由 UIService.attachGameWorld 统一注册，需 public 供宿主接口读取 */
     @property(VwExchange)
-    protected exchangeView: VwExchange;
+    public exchangeView: VwExchange;
 
     @property(VwAddGlass)
-    protected addGlassView: VwAddGlass;
+    public addGlassView: VwAddGlass;
+
+    @property(Button)
+    protected settingButton: Button;
+
+    @property(Node)
+    public settingViewRoot: Node | null = null;
+
+    @property(Node)
+    public settingAttachParent: Node | null = null;
+
+    protected onEnable(): void {
+        if (this.settingButton?.isValid) {
+            this.settingButton.node.on(Button.EventType.CLICK, this.onSettingClick, this);
+        }
+        attachGameWorld(this);
+    }
+
+    protected onDisable(): void {
+        if (this.settingButton?.isValid) {
+            this.settingButton.node.off(Button.EventType.CLICK, this.onSettingClick, this);
+        }
+        detachGameWorld();
+    }
 
     private colorBottleTarget: Record<number, number> = {};
 
     public reset(info: CwgStateInfo) {
-        this.levelLabel.string = "第" + (info.level + 1).toString() + "关";
+        this.levelLabel.string = '第' + (info.level + 1).toString() + '关';
         EventMng.off('completePour', this.handleCompletePour, this);
         EventMng.on('completePour', this.handleCompletePour, this);
-        this.registerUI();
         this.colorBottleTarget = this.calculateColorBottleTarget();
         this.printColorBottleTarget();
         if (this.exchangeView) {
@@ -56,20 +78,7 @@ export class VwUi extends Component {
     }
 
     protected onDestroy() {
-        UIManager.instance.unregister(VwUi.UI_ID_EXCHANGE);
-        UIManager.instance.unregister(VwUi.UI_ID_ADD_EMPTY_GLASS);
         EventMng.offTarget(this);
-    }
-
-    protected registerUI() {
-        UIManager.instance.register(VwUi.UI_ID_EXCHANGE, {
-            open: () => this.exchangeView?.show(),
-            close: () => this.exchangeView?.hide(),
-        });
-        UIManager.instance.register(VwUi.UI_ID_ADD_EMPTY_GLASS, {
-            open: () => this.addGlassView?.show(),
-            close: () => this.addGlassView?.hide(),
-        });
     }
 
     protected handleCompletePour() {
@@ -82,10 +91,6 @@ export class VwUi extends Component {
         this.undoButton.node.getComponent(Sprite).grayscale = !this.undoButton.interactable;
     }
 
-    /**
-     * 由关卡配置计算：每种颜色最多能装满多少瓶
-     * 例：颜色 2 在关卡中总数为 8，容量 4 => 可成 2 瓶
-     */
     protected calculateColorBottleTarget(): Record<number, number> {
         const colorCount: Record<number, number> = {};
         const levelGlasses = this.funlandView?.funland?.glasses ?? [];
@@ -119,9 +124,6 @@ export class VwUi extends Component {
         console.log(`[LevelTarget] ${text || '无颜色数据'}`);
     }
 
-    /**
-     * 通关判定：所有瓶子都满足“空瓶”或“4层同色密封”
-     */
     protected checkLevelPassed() {
         const glasses = this.funlandView?.glasses ?? [];
         if (glasses.length <= 0) {
@@ -137,13 +139,21 @@ export class VwUi extends Component {
     }
 
     protected handleProp(_, propName: string) {
-        if (propName === "exchange") {
-            UIManager.instance.open(VwUi.UI_ID_EXCHANGE);
-        } else if (propName === "undo") {
+        if (propName === 'exchange') {
+            void UI.openAsync(UIId.EXCHANGE);
+        } else if (propName === 'undo') {
             this.funlandView.handleUndo();
             this.updateUndoDisplayState();
-        } else if (propName === "addEmptyGlass") {
-            UIManager.instance.open(VwUi.UI_ID_ADD_EMPTY_GLASS);
+        } else if (propName === 'addEmptyGlass') {
+            void UI.openAsync(UIId.ADD_EMPTY_GLASS);
         }
+    }
+
+    protected onSettingClick(): void {
+        void UI.openAsync(UIId.SETTING, undefined, {pushToStack: false}).then((ok) => {
+            if (!ok) {
+                console.warn('[VwUi] 打开设置失败：UIId.SETTING 未注册或 UIService 未就绪');
+            }
+        });
     }
 }
