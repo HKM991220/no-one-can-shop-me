@@ -7,7 +7,7 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2025-08-07
  */
-import {_decorator, Component, instantiate, EventTouch, Node, v3, Vec2, Prefab, UITransform} from 'cc';
+import {_decorator, Component, instantiate, Node, v3, Prefab} from 'cc';
 import { VwFunland } from '../VwFunland';
 import { GlassInfo } from '../FunlandInfo';
 
@@ -27,6 +27,11 @@ export class VwAddGlass extends Component {
     protected funlandView: VwFunland;
 
     public show() {
+        if (!this.dmNode) {
+            console.error('[VwAddGlass] dmNode 未绑定，无法实例化加杯特效');
+            this.hide();
+            return;
+        }
         // 把this.funland.glasses按列分组
         const glassMap: Map<number, GlassInfo[]> = new Map();
         this.funlandView.funland.glasses.forEach((glass) => {

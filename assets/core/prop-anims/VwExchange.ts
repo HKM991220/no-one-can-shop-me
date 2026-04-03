@@ -7,7 +7,7 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2025-08-07
  */
-import {_decorator, Component, instantiate, EventTouch, Node, v3, Vec2, Prefab, UITransform} from 'cc';
+import {_decorator, Component, instantiate, Node, Prefab} from 'cc';
 import { VwFunland } from '../VwFunland';
 
 const {ccclass, menu, property} = _decorator;
@@ -26,6 +26,11 @@ export class VwExchange extends Component {
     protected funlandView: VwFunland;
 
     public show() {
+        if (!this.dmNode) {
+            console.error('[VwExchange] dmNode 未绑定，无法实例化选择特效');
+            this.hide();
+            return;
+        }
         this.node.active = true;
         this.contentNode.removeAllChildren();
         let showCount = 0;

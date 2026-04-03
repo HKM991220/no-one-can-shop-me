@@ -1,7 +1,7 @@
 /**
  * 全局 UI 中枢：预制体表、加载/实例化、显隐、销毁、弹窗置顶；业务只使用导出的 UI.open / UI.close。
  */
-import {instantiate, Node, Prefab} from 'cc';
+import {instantiate, isValid, Node, Prefab} from 'cc';
 import {BundleName, UIId, UIPrefabPath} from '../Enum';
 import {GameBootstrap} from '../GameBootstrap';
 import {UIHandler, UIManager, UIOpenOptions} from './UIManager';
@@ -156,10 +156,17 @@ async function ensurePrefabPanelInstance(id: string, cfg: PrefabPanelConfig): Pr
             return null;
         }
         const prefab = await loadPrefab(cfg.bundle, cfg.path);
-        if (!prefab) {
+        if (!prefab || !isValid(prefab)) {
+            console.error('[UIService] 预制体为空或已失效，无法实例化', id, cfg.bundle, cfg.path);
             return null;
         }
-        const node = instantiate(prefab);
+        let node: Node;
+        try {
+            node = instantiate(prefab);
+        } catch (e) {
+            console.error('[UIService] instantiate 失败', id, cfg.bundle, cfg.path, e);
+            return null;
+        }
         node.setParent(parent);
         node.active = false;
         prefabNodes.set(id, node);
@@ -187,14 +194,18 @@ function showPrefabPanel(id: string, cfg: PrefabPanelConfig): void {
         }
         return;
     }
-    void ensurePrefabPanelInstance(id, cfg).then((node) => {
-        if (node?.isValid) {
-            node.active = true;
-            if (!isLaunchPanelId(id)) {
-                bringOverlayToFront(node);
+    void ensurePrefabPanelInstance(id, cfg)
+        .then((node) => {
+            if (node?.isValid) {
+                node.active = true;
+                if (!isLaunchPanelId(id)) {
+                    bringOverlayToFront(node);
+                }
             }
-        }
-    });
+        })
+        .catch((e) => {
+            console.error('[UIService] 打开面板失败', id, cfg.bundle, cfg.path, e);
+        });
 }
 
 function createPrefabHandler(id: string, cfg: PrefabPanelConfig): UIHandler {

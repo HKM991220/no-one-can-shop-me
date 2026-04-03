@@ -112,6 +112,6 @@ export class VwEdPlay extends VwPlay {
     }
 
     protected openGame() {
-        director.loadScene('game');
+        director.loadScene('mian');
     }
 }

@@ -1,10 +1,11 @@
 import {_decorator, Button, Component, Label} from 'cc';
+import { UIBase } from '../common/ui/UIBase';
 
 const {ccclass, menu, property} = _decorator;
 
 
 @ccclass('LoadingView')
-export default class Loading extends Component {
+export default class Loading extends UIBase {
     @property(Label)
     protected tipsLabel: Label | null = null;
 

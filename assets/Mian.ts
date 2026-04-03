@@ -1,5 +1,6 @@
 import {_decorator, Component, Node} from 'cc';
 import {GameBootstrap} from './common/GameBootstrap';
+import {installScreenAdaptation, uninstallScreenAdaptation} from './common/ScreenAdapter';
 import {bootstrapMainEntry, shutdownMainEntry} from './common/ui/UIService';
 import {BundleName, UIPrefabPath} from './common/Enum';
 
@@ -24,6 +25,7 @@ export class Mian extends Component {
     protected gamePrefabPath: string = UIPrefabPath.GAME_VIEW;
 
     protected async start(): Promise<void> {
+        installScreenAdaptation('auto');
         await GameBootstrap.ensureReady();
         await bootstrapMainEntry({
             viewRoot: this.viewNode ?? this.node,
@@ -34,6 +36,7 @@ export class Mian extends Component {
     }
 
     protected onDestroy(): void {
+        uninstallScreenAdaptation();
         shutdownMainEntry();
     }
 }
