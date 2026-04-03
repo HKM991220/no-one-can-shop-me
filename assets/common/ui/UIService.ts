@@ -6,6 +6,7 @@ import {BundleName, UIId, UIPrefabPath} from '../Enum';
 import {GameBootstrap} from '../GameBootstrap';
 import {UIHandler, UIManager, UIOpenOptions} from './UIManager';
 import Loading from '../../core/LoadingView';
+import {HotUpdateService} from '../hotupdate/HotUpdateService';
 
 // ---------------------------------------------------------------------------
 // 预制体目录（内联原 UIPanelCatalog）
@@ -353,6 +354,9 @@ export async function bootstrapMainEntry(c: MainEntryConfig): Promise<void> {
     });
 
     UI.open(UIId.LOADING, undefined, {pushToStack: false});
+    if (loadingComp) {
+        await HotUpdateService.instance.runUpdateFlow((message) => loadingComp.setTips(message));
+    }
     if (loadingComp) {
         await loadingComp.playComplete();
     } else {

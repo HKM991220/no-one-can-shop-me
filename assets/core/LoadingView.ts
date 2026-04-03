@@ -48,6 +48,12 @@ export default class Loading extends UIBase {
         }
     }
 
+    public setTips(tips: string): void {
+        if (this.tipsLabel) {
+            this.tipsLabel.string = tips;
+        }
+    }
+
     /**
      * 由外部注入“开始游戏”回调
      */

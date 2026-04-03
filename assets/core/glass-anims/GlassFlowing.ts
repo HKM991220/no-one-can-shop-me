@@ -50,7 +50,7 @@ export default class GlassFlowing extends Glass {
     public async playPutOnCapAnim() {
         this.capNode.active = true;
         this.capNode.y = 276;
-        await Toolkit.waitForTween(tween(this.capNode).to(0.3, {y: 216}));
+        await Toolkit.waitForTween(tween(this.capNode).to(0.3, {y: 260}));
     }
 
     /**

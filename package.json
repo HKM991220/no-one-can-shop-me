@@ -1,5 +1,13 @@
 {
   "name": "waterdemo",
+  "private": true,
+  "scripts": {
+    "hotupdate:manifest": "node scripts/hotupdate/build-manifest.js",
+    "hotupdate:manifest:config": "node scripts/hotupdate/build-manifest.js --config=scripts/hotupdate/config.json",
+    "hotupdate:embed:android": "node scripts/hotupdate/sync-embedded-manifest.js --config=scripts/hotupdate/config.json --platform=android",
+    "hotupdate:embed:ios": "node scripts/hotupdate/sync-embedded-manifest.js --config=scripts/hotupdate/config.json --platform=ios",
+    "hotupdate:release:android": "npm run hotupdate:manifest:config && npm run hotupdate:embed:android"
+  },
   "uuid": "63cf8fce-f783-47ba-b2cd-18a141ce3b69",
   "creator": {
     "version": "3.8.7"

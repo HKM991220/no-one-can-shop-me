@@ -1,0 +1,23 @@
+{
+  "platforms": [
+    "android",
+    "ios"
+  ],
+  "buildDir": "build/jsb-link",
+  "buildDirByPlatform": {
+    "android": "build/jsb-link-android",
+    "ios": "build/jsb-link-ios"
+  },
+  "outputDir": "build/hotupdate-manifest",
+  "releaseDir": "build/hotupdate-release",
+  "packageUrl": "https://your-cdn.example.com/hotupdate",
+  "packageUrlByPlatform": {
+    "android": "https://your-cdn.example.com/hotupdate/android",
+    "ios": "https://your-cdn.example.com/hotupdate/ios"
+  },
+  "version": "1.0.0",
+  "includeDirs": [
+    "src",
+    "assets"
+  ]
+}

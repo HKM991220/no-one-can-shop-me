@@ -94,7 +94,7 @@ export default class GlassPourOut extends Glass {
         const tw = tween(this.node).to((0.666 + ((5 - layerID) * 0.333)) / speed, {worldPosition: this.oriPosition});
         return Toolkit.waitForTween(tw);
     }
-
+    
     /**
      * 处理倒水完成事件
      * @param currentLayerIdx 当前液体层Index

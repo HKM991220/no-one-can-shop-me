@@ -3,6 +3,7 @@ import {GameBootstrap} from './common/GameBootstrap';
 import {installScreenAdaptation, uninstallScreenAdaptation} from './common/ScreenAdapter';
 import {bootstrapMainEntry, shutdownMainEntry} from './common/ui/UIService';
 import {BundleName, UIPrefabPath} from './common/Enum';
+import {HotUpdateService} from './common/hotupdate/HotUpdateService';
 
 const {ccclass, menu, property} = _decorator;
 
@@ -26,6 +27,7 @@ export class Mian extends Component {
 
     protected async start(): Promise<void> {
         installScreenAdaptation('auto');
+        HotUpdateService.instance.applyStoredSearchPaths();
         await GameBootstrap.ensureReady();
         await bootstrapMainEntry({
             viewRoot: this.viewNode ?? this.node,
