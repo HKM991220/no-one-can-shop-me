@@ -27,9 +27,6 @@ export default class GlassPourOut extends Glass {
     @property(Node)
     protected frontNode: Node;
 
-    @property([Sprite])
-    protected flowingSprites: Sprite[] = [];
-
     /** 起始列索引（0-based） */
     protected startColumnIndex: number = 0;
 
@@ -54,9 +51,6 @@ export default class GlassPourOut extends Glass {
 
     public init(info: GlassInfo): void {
         super.init(info);
-        this.flowingSprites.forEach((sprite) => {
-            sprite.node.active = false;
-        })
     }
 
     /**
@@ -158,10 +152,7 @@ export default class GlassPourOut extends Glass {
             this._eventCallbacks.startPour?.(layerIdx, colorIdx);
 
             const color = Color.WHITE.fromHEX(WaterColors[colorIdx].base);
-            this.flowingSprites.forEach((sprite) => {
-                sprite.node.active = true;
-                sprite.color = color;
-            })
+      
         }
     }
 
@@ -201,8 +192,6 @@ export default class GlassPourOut extends Glass {
     // 在回收方法中清理回调
     public recycle() {
         this._eventCallbacks = {};
-        this.flowingSprites.forEach((sprite) => {
-            sprite.node.active = false;
-        })
+   
     }
 }

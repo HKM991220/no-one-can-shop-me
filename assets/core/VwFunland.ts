@@ -15,6 +15,7 @@ import FunlandInfo, { GlassInfo } from './FunlandInfo';
 import EventMng from '../common/EventMng';
 import { VwEffect } from './VwEffect';
 import SoundComp from './SoundComp';
+import GlassPourOut from './glass-anims/GlassPourOut';
 
 const {ccclass, menu, property} = _decorator;
 
@@ -170,12 +171,17 @@ export class VwFunland extends Component {
         // 使用两个动画对象，一个是倒出水的动画，一个是装水的动画
         const pourAnim = this.pools.getPourOutAnim(lastSelected, this.effectView.node);
         const flowAnim = this.pools.getFlowingAnim(currentSelected, this.glassesNode);
+        // 与倒出动画同挂在特效层，并排在其后渲染，避免接水水流被 pourAnim 挡住
+        flowAnim.node.setParent(this.effectView.node, true);
+        flowAnim.node.setSiblingIndex(pourAnim.node.getSiblingIndex() + 1);
 
         // 根据相对位置调整动画方向
         if (lastSelected.node.x > currentSelected.node.x) {
             pourAnim.node.scale = v3(-1, 1, 1);
+            flowAnim.flowingNode.scale = v3(1, 1, 1);
         } else {
             pourAnim.node.scale = v3(1, 1, 1);
+            flowAnim.flowingNode.scale = v3(-1, 1, 1);
         }
 
         // 完成实际的倒水状态（非倒水），获得倒水的数据: addWaters

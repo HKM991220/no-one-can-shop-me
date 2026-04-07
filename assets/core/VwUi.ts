@@ -6,16 +6,16 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2024-08-08
  */
-import {_decorator, Component, Label, Button, Node, Sprite} from 'cc';
-import {CwgStateInfo} from './CwgState';
-import {VwFunland} from './VwFunland';
+import { _decorator, Component, Label, Button, Node, Sprite } from 'cc';
+import { CwgStateInfo } from './CwgState';
+import { VwFunland } from './VwFunland';
 import EventMng from '../common/EventMng';
-import {VwExchange} from './prop-anims/VwExchange';
-import {VwAddGlass} from './prop-anims/VwAddGlass';
-import {UIId} from '../common/Enum';
-import {attachGameWorld, detachGameWorld, UI} from '../common/ui/UIService';
+import { VwExchange } from './prop-anims/VwExchange';
+import { VwAddGlass } from './prop-anims/VwAddGlass';
+import { UIId } from '../common/Enum';
+import { attachGameWorld, detachGameWorld, UI } from '../common/ui/UIService';
 
-const {ccclass, menu, property} = _decorator;
+const { ccclass, menu, property } = _decorator;
 
 @ccclass('VwUi')
 @menu('cwg/VwUi')
@@ -121,6 +121,7 @@ export class VwUi extends Component {
             .sort((a, b) => Number(a) - Number(b))
             .map((key) => `颜色${key}: ${this.colorBottleTarget[Number(key)]}瓶`)
             .join(', ');
+        console.log(this.colorBottleTarget, 'colorBottleTarget');
         console.log(`[LevelTarget] ${text || '无颜色数据'}`);
     }
 
@@ -150,7 +151,7 @@ export class VwUi extends Component {
     }
 
     protected onSettingClick(): void {
-        void UI.openAsync(UIId.SETTING, undefined, {pushToStack: false}).then((ok) => {
+        void UI.openAsync(UIId.SETTING, undefined, { pushToStack: false }).then((ok) => {
             if (!ok) {
                 console.warn('[VwUi] 打开设置失败：UIId.SETTING 未注册或 UIService 未就绪');
             }

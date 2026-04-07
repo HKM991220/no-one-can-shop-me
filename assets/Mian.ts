@@ -4,6 +4,7 @@ import {installScreenAdaptation, uninstallScreenAdaptation} from './common/Scree
 import {bootstrapMainEntry, shutdownMainEntry} from './common/ui/UIService';
 import {BundleName, UIPrefabPath} from './common/Enum';
 import {HotUpdateService} from './common/hotupdate/HotUpdateService';
+import { TTMinis } from './common/sdk/TTMinis';
 
 const {ccclass, menu, property} = _decorator;
 
@@ -35,6 +36,8 @@ export class Mian extends Component {
             loadingPrefabPath: this.loadingPrefabPath,
             gamePrefabPath: this.gamePrefabPath,
         });
+
+        TTMinis.inst.onLoad()
     }
 
     protected onDestroy(): void {

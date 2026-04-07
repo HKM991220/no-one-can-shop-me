@@ -24,6 +24,9 @@ export default class GlassFlowing extends Glass {
     @property(Node)
     public flowingNode: Node;
 
+    @property(Node)
+    public flowingShadowNode: Node;
+
     @property(SoundComp)
     protected soundComp: SoundComp;
 
@@ -61,6 +64,8 @@ export default class GlassFlowing extends Glass {
 
         const flowingSprite = this.flowingNode.getComponent(Sprite);
         flowingSprite.color = Color.WHITE.fromHEX(WaterColors[color].base);
+        const flowingShadowSprite = this.flowingShadowNode.getComponent(Sprite);
+        flowingShadowSprite.color = Color.WHITE.fromHEX(WaterColors[color].surface);
 
         const startIdx = this.waters.length;
 
