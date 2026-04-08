@@ -38,6 +38,9 @@ export default class SettingView extends SimpleUIBase {
     @property(Button)
     protected countryCloseButton: Button | null = null;
 
+    @property(Button)
+    protected homeButton: Button | null = null;
+
     private _syncingUi = false;
     private _syncingLang = false;
 
@@ -212,6 +215,11 @@ export default class SettingView extends SimpleUIBase {
             return;
         }
         GlobalPlayerData.instance.setSfxEnabled(toggle.isChecked);
+    }
+
+    private onHomeClick(): void {
+        SimpleUIManager.instance.open(UIPanelId.SALA);
+        SimpleUIManager.instance.close(UIPanelId.SETTING);
     }
 
 

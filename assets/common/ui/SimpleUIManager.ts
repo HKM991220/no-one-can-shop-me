@@ -67,6 +67,8 @@ export class SimpleUIManager extends Component {
 	private defaultParent: Node | null = null;
 	/** 层级节点映射 */
 	private layerParents: Map<number, Node> = new Map();
+	/** 叠在所有 Layer_* 之上的挂载点（始终为 defaultParent 最后一个子节点） */
+	private _topMountSlot: Node | null = null;
 
 	public static get instance(): SimpleUIManager {
 		if (this._instance?.isValid) {
@@ -116,12 +118,55 @@ export class SimpleUIManager extends Component {
 	 */
 	public init(defaultParent: Node): void {
 		this.defaultParent = defaultParent;
-		// 创建层级节点
-		for (let i = 0; i <= 10; i++) {
-			const layerNode = new Node(`Layer_${i}`);
-			layerNode.parent = defaultParent;
-			this.layerParents.set(i, layerNode);
+		if (this.layerParents.size === 0) {
+			for (let i = 0; i <= 10; i++) {
+				const layerNode = new Node(`Layer_${i}`);
+				layerNode.parent = defaultParent;
+				this.layerParents.set(i, layerNode);
+			}
+		} else {
+			for (let i = 0; i <= 10; i++) {
+				const n = this.layerParents.get(i);
+				if (n?.isValid) {
+					n.parent = defaultParent;
+				}
+			}
 		}
+		if (!this._topMountSlot?.isValid) {
+			this._topMountSlot = new Node("__TopMount__");
+		}
+		this._topMountSlot.parent = defaultParent;
+		this.ensureTopMountLast();
+	}
+
+	/**
+	 * 将节点挂到「永远盖过所有注册 UI」的插槽内（如金币条、全局顶栏）。
+	 * 须在 init(defaultParent) 之后调用。
+	 */
+	public mountPersistentTopNode(node: Node | null): void {
+		if (!node?.isValid) {
+			return;
+		}
+		if (!this._topMountSlot?.isValid || !this.defaultParent?.isValid) {
+			console.warn("[SimpleUIManager] mountPersistentTopNode 需在 init 之后调用");
+			return;
+		}
+		node.setParent(this._topMountSlot);
+		node.setSiblingIndex(0);
+		node.active = true;
+		this.ensureTopMountLast();
+	}
+
+	private ensureTopMountLast(): void {
+		const root = this.defaultParent;
+		const slot = this._topMountSlot;
+		if (!root?.isValid || !slot?.isValid) {
+			return;
+		}
+		if (slot.parent !== root) {
+			slot.parent = root;
+		}
+		slot.setSiblingIndex(Math.max(0, root.children.length - 1));
 	}
 
 	/**
@@ -251,6 +296,7 @@ export class SimpleUIManager extends Component {
 				this.uiStack.push(id);
 			}
 
+			this.ensureTopMountLast();
 			return true;
 		}
 
@@ -289,6 +335,7 @@ export class SimpleUIManager extends Component {
 			this.uiStack.splice(stackIndex, 1);
 		}
 
+		this.ensureTopMountLast();
 		return true;
 	}
 

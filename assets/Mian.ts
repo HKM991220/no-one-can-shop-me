@@ -18,6 +18,10 @@ export class Mian extends Component {
     @property({ type: Node, tooltip: 'UI 挂载根节点（mian 场景下的 view 节点）' })
     protected viewNode: Node | null = null;
 
+    /** 由 SimpleUIManager 挂入 __TopMount__，永远盖过 Layer_0～Layer_10 内各面板 */
+    @property({ type: Node, tooltip: '全局置顶 UI（如金币条）；须在编辑器绑定场景中的节点' })
+    protected topNode: Node | null = null;
+
     protected async start(): Promise<void> {
         installScreenAdaptation('auto');
         HotUpdateService.instance.applyStoredSearchPaths();
@@ -29,6 +33,7 @@ export class Mian extends Component {
         // 初始化新UI框架
         const root = this.viewNode ?? this.node;
         SimpleUIManager.instance.init(root);
+        SimpleUIManager.instance.mountPersistentTopNode(this.topNode);
         registerAllUIPanels();
         // 与 Loading 并行拉取 Game / Setting / Sala 预制体，避免进游戏后首次点开设置要等资源
         preloadCommonPanels();

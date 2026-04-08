@@ -23,10 +23,10 @@ export enum UIPrefabPath {
  * 新增界面时只改此文件，入口场景调用 registerAllUIPanels() 即可。
  */
 export const UI_PANEL_CONFIGS: UIConfig[] = [
-    { id: UIPanelId.LOADING, bundle: 'resources', path: UIPrefabPath.LOADING_VIEW, layer: 10 },
-    { id: UIPanelId.GAME, bundle: 'resources', path:  UIPrefabPath.GAME_VIEW },
-    { id: UIPanelId.SETTING, bundle: 'resources', path:  UIPrefabPath.SETTING_VIEW, layer: 5 },
-    { id: UIPanelId.SALA, bundle: 'resources', path:  UIPrefabPath.SALA_VIEW, layer: 5 },
+    { id: UIPanelId.LOADING, bundle: 'subpackages', path: UIPrefabPath.LOADING_VIEW, layer: 10 },
+    { id: UIPanelId.GAME, bundle: 'subpackages', path:  UIPrefabPath.GAME_VIEW },
+    { id: UIPanelId.SETTING, bundle: 'subpackages', path:  UIPrefabPath.SETTING_VIEW, layer: 5 },
+    { id: UIPanelId.SALA, bundle: 'subpackages', path:  UIPrefabPath.SALA_VIEW, layer: 5 },
 ];
 
 /** 在 SimpleUIManager.init(parent) 之后调用 */

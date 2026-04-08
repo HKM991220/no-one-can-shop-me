@@ -1,0 +1,6 @@
+{
+  "packageUrl": "https://your-cdn.example.com/hotupdate",
+  "remoteManifestUrl": "https://your-cdn.example.com/hotupdate/project.manifest",
+  "remoteVersionUrl": "https://your-cdn.example.com/hotupdate/version.manifest",
+  "version": "1.0.0"
+}
