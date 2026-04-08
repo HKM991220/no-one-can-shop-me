@@ -2,14 +2,15 @@ import {_decorator, Component, director, Node} from 'cc';
 import {GameAudioSettings} from './AudioSetting';
 import {AudioManager} from './AudioManager';
 import {ResManager} from './ResManager';
-import {UIManager} from './ui/UIManager';
 
 const {ccclass} = _decorator;
 
 /**
  * 全局单例根节点：在 `ensureReady()` 内创建常驻节点并挂载
- * ResManager、AudioManager、UIManager，统一初始化顺序。
+ * ResManager、AudioManager，统一初始化顺序。
  * 入口场景（如 Mian）应在任何游戏逻辑前 `await GameBootstrap.ensureReady()`。
+ * 
+ * 注：UI管理已迁移到 SimpleUIManager，不在此处初始化
  */
 @ccclass('GameBootstrap')
 export class GameBootstrap extends Component {
@@ -67,9 +68,7 @@ export class GameBootstrap extends Component {
         audioNode.setParent(node);
         boot._audio = audioNode.addComponent(AudioManager);
 
-        const uiNode = new Node('UIManager');
-        uiNode.setParent(node);
-        UIManager.bindInstance(uiNode.addComponent(UIManager));
+        // 注：旧UIManager初始化已移除，新SimpleUIManager在Mian.ts中独立初始化
 
         director.addPersistRootNode(node);
         GameBootstrap._root = boot;

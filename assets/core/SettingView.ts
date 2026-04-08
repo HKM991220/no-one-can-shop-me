@@ -1,17 +1,18 @@
 import {_decorator, Component, Slider, Toggle} from 'cc';
 import {GameAudioSettings} from '../common/AudioSetting';
-import {UIId} from '../common/Enum';
-import {UI} from '../common/ui/UIService';
-import { UIBase } from '../common/ui/UIBase';
+import { SimpleUIBase } from '../common/ui/SimpleUIBase';
+import { SimpleUIManager } from '../common/ui/SimpleUIManager';
+import { UIPanelId } from '../common/ui/UIPanelRegistry';
 
 const {ccclass, menu, property} = _decorator;
 
 /**
  * 设置页：音乐（背景音）与音效开关，可选音量滑条；读写 GameAudioSettings（本地持久化 + 同步 AudioManager）。
+ * 使用新UI框架 SimpleUIBase
  */
 @ccclass('SettingView')
 @menu('cwg/SettingView')
-export default class SettingView extends UIBase {
+export default class SettingView extends SimpleUIBase {
     /** 音乐 / 背景音开关 */
     @property(Toggle)
     protected soundToggle: Toggle | null = null;
@@ -30,20 +31,21 @@ export default class SettingView extends UIBase {
     private _syncingUi = false;
 
     /**
-     * 供关闭按钮在编辑器里绑定：关闭设置面板（UI.close）。
+     * 供关闭按钮在编辑器里绑定：关闭设置面板。
      */
     public onCloseClick(): void {
-        UI.close(UIId.SETTING);
+        // 使用新UI框架关闭
+        SimpleUIManager.instance.close(UIPanelId.SETTING);
     }
 
-    /** 启用时：从存档刷新界面并绑定控件事件 */
-    protected onEnable(): void {
+    /** 打开时：从存档刷新界面并绑定控件事件 */
+    protected onUIOpen(data?: any): void {
         this.refreshFromSettings();
         this.bindControls();
     }
 
-    /** 禁用时：移除事件监听 */
-    protected onDisable(): void {
+    /** 关闭时：移除事件监听 */
+    protected onUIClose(data?: any): void {
         this.unbindControls();
     }
 

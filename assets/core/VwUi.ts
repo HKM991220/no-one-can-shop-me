@@ -12,8 +12,8 @@ import { VwFunland } from './VwFunland';
 import EventMng from '../common/EventMng';
 import { VwExchange } from './prop-anims/VwExchange';
 import { VwAddGlass } from './prop-anims/VwAddGlass';
-import { UIId } from '../common/Enum';
-import { attachGameWorld, detachGameWorld, UI } from '../common/ui/UIService';
+import { SimpleUIManager } from '../common/ui/SimpleUIManager';
+import { UIPanelId } from '../common/ui/UIPanelRegistry';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -31,10 +31,11 @@ export class VwUi extends Component {
     @property(Button)
     protected undoButton: Button;
 
-    /** 由 UIService.attachGameWorld 统一注册，需 public 供宿主接口读取 */
+    /** 场景内挂载的兑换层（非预制体注册，走 show/hide） */
     @property(VwExchange)
     public exchangeView: VwExchange;
 
+    /** 场景内挂载的加杯层（非预制体注册，走 show/hide） */
     @property(VwAddGlass)
     public addGlassView: VwAddGlass;
 
@@ -51,14 +52,12 @@ export class VwUi extends Component {
         if (this.settingButton?.isValid) {
             this.settingButton.node.on(Button.EventType.CLICK, this.onSettingClick, this);
         }
-        attachGameWorld(this);
     }
 
     protected onDisable(): void {
         if (this.settingButton?.isValid) {
             this.settingButton.node.off(Button.EventType.CLICK, this.onSettingClick, this);
         }
-        detachGameWorld();
     }
 
     private colorBottleTarget: Record<number, number> = {};
@@ -141,19 +140,20 @@ export class VwUi extends Component {
 
     protected handleProp(_, propName: string) {
         if (propName === 'exchange') {
-            void UI.openAsync(UIId.EXCHANGE);
+            this.exchangeView?.show();
         } else if (propName === 'undo') {
             this.funlandView.handleUndo();
             this.updateUndoDisplayState();
         } else if (propName === 'addEmptyGlass') {
-            void UI.openAsync(UIId.ADD_EMPTY_GLASS);
+            this.addGlassView?.show();
         }
     }
 
     protected onSettingClick(): void {
-        void UI.openAsync(UIId.SETTING, undefined, { pushToStack: false }).then((ok) => {
+        // 使用新UI框架打开设置界面
+        void SimpleUIManager.instance.open(UIPanelId.SETTING, undefined, { pushToStack: false }).then((ok) => {
             if (!ok) {
-                console.warn('[VwUi] 打开设置失败：UIId.SETTING 未注册或 UIService 未就绪');
+                console.warn('[VwUi] 打开设置失败：Setting 未注册或 SimpleUIManager 未就绪');
             }
         });
     }

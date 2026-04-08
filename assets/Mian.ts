@@ -1,47 +1,42 @@
-import {_decorator, Component, Node} from 'cc';
-import {GameBootstrap} from './common/GameBootstrap';
-import {installScreenAdaptation, uninstallScreenAdaptation} from './common/ScreenAdapter';
-import {bootstrapMainEntry, shutdownMainEntry} from './common/ui/UIService';
-import {BundleName, UIPrefabPath} from './common/Enum';
-import {HotUpdateService} from './common/hotupdate/HotUpdateService';
+import { _decorator, Component, Node } from 'cc';
+import { GameBootstrap } from './common/GameBootstrap';
+import { installScreenAdaptation, uninstallScreenAdaptation } from './common/ScreenAdapter';
+import { SimpleUIManager } from './common/ui/SimpleUIManager';
+import { registerAllUIPanels, UIPanelId } from './common/ui/UIPanelRegistry';
+import { HotUpdateService } from './common/hotupdate/HotUpdateService';
 import { TTMinis } from './common/sdk/TTMinis';
 
-const {ccclass, menu, property} = _decorator;
+const { ccclass, menu, property } = _decorator;
 
 /**
- * 主场景入口：不包含 UI 注册/加载逻辑，仅调用 UIService.bootstrapMainEntry。
+ * 主场景入口：使用新UI框架 SimpleUIManager
  */
 @ccclass('Mian')
 @menu('cwg/Mian')
 export class Mian extends Component {
-    @property({type: Node, tooltip: 'UI 挂载根节点（mian 场景下的 view 节点）'})
+    @property({ type: Node, tooltip: 'UI 挂载根节点（mian 场景下的 view 节点）' })
     protected viewNode: Node | null = null;
-
-    @property({tooltip: '资源 Bundle 名称'})
-    protected bundleName: string = BundleName.RESOURCES;
-
-    @property({tooltip: 'loading 预制体路径（相对 bundle）'})
-    protected loadingPrefabPath: string = UIPrefabPath.LOADING_VIEW;
-
-    @property({tooltip: 'game 预制体路径（相对 bundle）'})
-    protected gamePrefabPath: string = UIPrefabPath.GAME_VIEW;
 
     protected async start(): Promise<void> {
         installScreenAdaptation('auto');
         HotUpdateService.instance.applyStoredSearchPaths();
         await GameBootstrap.ensureReady();
-        await bootstrapMainEntry({
-            viewRoot: this.viewNode ?? this.node,
-            bundle: this.bundleName,
-            loadingPrefabPath: this.loadingPrefabPath,
-            gamePrefabPath: this.gamePrefabPath,
-        });
+        // 须在任何 UI（如 Loading）里调用 TT 能力之前完成，否则 TTMinis.inst 尚未赋值
+        TTMinis.ensureInitialized();
 
-        TTMinis.inst.onLoad()
+        // 初始化新UI框架
+        const root = this.viewNode ?? this.node;
+        SimpleUIManager.instance.init(root);
+        registerAllUIPanels();
+
+        // 预加载并打开Loading界面
+        await SimpleUIManager.instance.preload(UIPanelId.LOADING);
+        await SimpleUIManager.instance.open(UIPanelId.LOADING, undefined, { pushToStack: false });
     }
 
     protected onDestroy(): void {
         uninstallScreenAdaptation();
-        shutdownMainEntry();
+        // 清理UI管理器
+        SimpleUIManager.instance.destroyAll();
     }
 }
