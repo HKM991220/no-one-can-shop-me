@@ -54,6 +54,8 @@ interface UIInstance {
 @ccclass("SimpleUIManager")
 export class SimpleUIManager extends Component {
 	private static _instance: SimpleUIManager | null = null;
+	/** 常驻根节点固定名：热重载后静态 _instance 会丢，靠名字在场景里找回唯一实例，避免重复 addPersistRootNode */
+	private static readonly SINGLETON_NODE_NAME = "__SimpleUIManagerRoot__";
 
 	/** UI配置表 */
 	private uiConfigs: Map<string, UIConfig> = new Map();
@@ -67,12 +69,46 @@ export class SimpleUIManager extends Component {
 	private layerParents: Map<number, Node> = new Map();
 
 	public static get instance(): SimpleUIManager {
-		if (!this._instance || !this._instance.isValid) {
-			const root = new Node("SimpleUIManager");
-			this._instance = root.addComponent(SimpleUIManager);
-			director.addPersistRootNode(root);
+		if (this._instance?.isValid) {
+			return this._instance;
 		}
+		const resurrected = this.findExistingSingleton();
+		if (resurrected) {
+			this._instance = resurrected;
+			return this._instance;
+		}
+		const root = new Node(SimpleUIManager.SINGLETON_NODE_NAME);
+		const comp = root.addComponent(SimpleUIManager);
+		this._instance = comp;
+		director.addPersistRootNode(root);
 		return this._instance;
+	}
+
+	/** 脚本热重载 / 静态丢失后，复用场景里已有的 SimpleUIManager，避免叠一堆常驻节点 */
+	private static findExistingSingleton(): SimpleUIManager | null {
+		const scene = director.getScene();
+		if (!scene?.isValid) {
+			return null;
+		}
+		const found: SimpleUIManager[] = [];
+		const visit = (n: Node): void => {
+			const c = n.getComponent(SimpleUIManager);
+			if (c?.isValid) {
+				found.push(c);
+			}
+			for (const ch of n.children) {
+				visit(ch);
+			}
+		};
+		visit(scene);
+		if (found.length === 0) {
+			return null;
+		}
+		const byName = found.find((c) => c.node.name === SimpleUIManager.SINGLETON_NODE_NAME);
+		if (byName) {
+			return byName;
+		}
+		return found[0];
 	}
 
 	/**
@@ -406,7 +442,4 @@ export class SimpleUIManager extends Component {
 	}
 }
 
-/**
- * 便捷导出
- */
-export const UIMgr = SimpleUIManager.instance;
+/** 勿在模块顶层调用 `SimpleUIManager.instance`，否则每次脚本重载都会多造一个常驻节点；请在使用处再取 instance。 */

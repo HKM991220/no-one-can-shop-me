@@ -1,0 +1,14 @@
+{
+  "common": {
+    "ok": "确定",
+    "cancel": "取消",
+    "loading": "加载中…"
+  },
+  "settings": {
+    "title": "设置",
+    "music": "音乐",
+    "sound": "音效",
+    "language": "中国",
+    "country": "国家"
+  }
+}

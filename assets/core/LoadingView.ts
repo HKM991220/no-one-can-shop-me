@@ -85,7 +85,7 @@ export default class Loading extends SimpleUIBase {
 		// 未由外部 bindStartAction 时，默认：进入游戏并关闭 Loading（入口场景只需 register + open）
 		if (this.onStartCallback == null) {
 			this.onStartCallback = () => {
-				void SimpleUIManager.instance.open(UIPanelId.GAME, undefined, { pushToStack: false });
+				void SimpleUIManager.instance.open(UIPanelId.SALA, undefined, { pushToStack: false });
 				SimpleUIManager.instance.close(UIPanelId.LOADING);
 			};
 		}

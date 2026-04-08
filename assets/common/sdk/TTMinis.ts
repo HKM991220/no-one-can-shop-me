@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, director, sys } from "cc";
+import { _decorator, Component, Node, director } from "cc";
 import { TTConfig } from "./TTConfig";
 const { ccclass } = _decorator;
 
@@ -62,6 +62,7 @@ export class TTMinis extends Component {
 	login(forceRefresh: boolean = false): Promise<string> {
 		return new Promise((resolve, reject) => {
 			if (!this.isInTT) return reject("非抖音环境");
+			if (!tt?.login) return reject("不支持登录");
 
 			// 检查缓存的登录态是否有效
 			if (!forceRefresh && this.loginCode && Date.now() < this.loginExpireTime) {
@@ -105,6 +106,10 @@ export class TTMinis extends Component {
 			console.warn("[TTMinis] 激励广告ID为空，跳过初始化");
 			return;
 		}
+		if (!tt?.createRewardedVideoAd) {
+			console.warn("[TTMinis] 当前环境不支持 createRewardedVideoAd");
+			return;
+		}
 		this.rewardedAdId = adId;
 
 		this.rewardedVideoAd = tt.createRewardedVideoAd({ adUnitId: adId });
@@ -123,10 +128,10 @@ export class TTMinis extends Component {
 	}
 
 	/**
-	 * 检查激励广告是否已准备好
+	 * 是否已加载完成、可尝试 show（仅表示客户端就绪，非「一定能播」）
 	 */
 	isRewardedAdReady(): boolean {
-		return !!this.rewardedVideoAd;
+		return !!this.rewardedVideoAd && this.rewardedReady;
 	}
 
 	showRewarded(onSuccess: () => void, onSkipped?: () => void) {
@@ -217,6 +222,10 @@ export class TTMinis extends Component {
 			console.warn("[TTMinis] 插屏广告ID为空，跳过初始化");
 			return;
 		}
+		if (!tt?.createInterstitialAd) {
+			console.warn("[TTMinis] 当前环境不支持 createInterstitialAd");
+			return;
+		}
 
 		this.interstitialAd = tt.createInterstitialAd({ adUnitId: adId });
 
@@ -250,24 +259,39 @@ export class TTMinis extends Component {
 			return;
 		}
 
-		this.interstitialAd
-			.show()
-			.then(() => {
-				console.log("[TTMinis] 插屏广告显示成功");
-				onSuccess?.();
-			})
-			.catch((err) => {
-				console.error("[TTMinis] 插屏广告显示失败:", err);
-				this.toast("广告显示失败");
+		const ad = this.interstitialAd;
+		const tryShow = () =>
+			ad
+				.show()
+				.then(() => {
+					console.log("[TTMinis] 插屏广告显示成功");
+					onSuccess?.();
+				})
+				.catch((err) => {
+					console.error("[TTMinis] 插屏广告显示失败:", err);
+					this.toast("广告显示失败");
+					onFail?.(err);
+				});
+
+		if (typeof ad.load === "function") {
+			ad.load().then(tryShow).catch((err: unknown) => {
+				console.error("[TTMinis] 插屏广告加载失败:", err);
+				this.toast("广告加载失败");
 				onFail?.(err);
 			});
+		} else {
+			void tryShow();
+		}
 	}
 
 	// ==============================================
 	// 工具
 	// ==============================================
 	toast(msg: string) {
-		if (!this.isInTT) return;
+		if (!this.isInTT || !tt?.showToast) {
+			console.log("[TTMinis] toast:", msg);
+			return;
+		}
 		tt.showToast({ title: msg, icon: "none" });
 	}
 
@@ -330,14 +354,14 @@ export class TTMinis extends Component {
 	// ==============================================
 	addShortcut(): Promise<boolean> {
 		return new Promise((resolve) => {
-			if (!this.isInTT) return resolve(false);
+			if (!this.isInTT || !tt?.addShortcut) return resolve(false);
 			tt.addShortcut({ success: () => resolve(true), fail: () => resolve(false) });
 		});
 	}
 
 	getShortcutMissionReward(): Promise<{ canReceive: boolean }> {
 		return new Promise((resolve) => {
-			if (!this.isInTT) return resolve({ canReceive: false });
+			if (!this.isInTT || !tt?.getShortcutMissionReward) return resolve({ canReceive: false });
 			tt.getShortcutMissionReward({
 				success: (res) => resolve({ canReceive: res.canReceive }),
 				fail: () => resolve({ canReceive: false }),
@@ -365,14 +389,14 @@ export class TTMinis extends Component {
 	// ==============================================
 	startEntranceMission(): Promise<boolean> {
 		return new Promise((resolve) => {
-			if (!this.isInTT) return resolve(false);
+			if (!this.isInTT || !tt?.startEntranceMission) return resolve(false);
 			tt.startEntranceMission({ success: () => resolve(true), fail: () => resolve(false) });
 		});
 	}
 
 	getEntranceMissionReward(): Promise<{ canReceive: boolean }> {
 		return new Promise((resolve) => {
-			if (!this.isInTT) return resolve({ canReceive: false });
+			if (!this.isInTT || !tt?.getEntranceMissionReward) return resolve({ canReceive: false });
 			tt.getEntranceMissionReward({
 				success: (res) => resolve({ canReceive: res.canReceive }),
 				fail: () => resolve({ canReceive: false }),

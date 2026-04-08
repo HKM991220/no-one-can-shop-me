@@ -1,0 +1,13 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "loading": "Loading…"
+  },
+  "settings": {
+    "title": "Settings",
+    "music": "Music",
+    "sound": "Sound",
+    "language": "Language"
+  }
+}

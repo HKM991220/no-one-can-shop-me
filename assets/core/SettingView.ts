@@ -1,76 +1,118 @@
-import {_decorator, Component, Slider, Toggle} from 'cc';
-import {GameAudioSettings} from '../common/AudioSetting';
+import { _decorator, Button, Label, Node, Sprite, Toggle } from 'cc';
+import { GlobalPlayerData } from '../common/GlobalPlayerData';
 import { SimpleUIBase } from '../common/ui/SimpleUIBase';
 import { SimpleUIManager } from '../common/ui/SimpleUIManager';
 import { UIPanelId } from '../common/ui/UIPanelRegistry';
+import { I18n } from '../common/i18n/I18n';
 
-const {ccclass, menu, property} = _decorator;
+const { ccclass, menu, property } = _decorator;
+
+
 
 /**
- * 设置页：音乐（背景音）与音效开关，可选音量滑条；读写 GameAudioSettings（本地持久化 + 同步 AudioManager）。
- * 使用新UI框架 SimpleUIBase
+ * 设置页：音乐/音效开关；语言通过国旗 Toggle 切换（与 I18n + GlobalPlayerData 同步）。
  */
 @ccclass('SettingView')
 @menu('cwg/SettingView')
 export default class SettingView extends SimpleUIBase {
-    /** 音乐 / 背景音开关 */
     @property(Toggle)
     protected soundToggle: Toggle | null = null;
 
-    /** 音效开关 */
     @property(Toggle)
     protected effectToggle: Toggle | null = null;
 
-    @property({type: Slider, tooltip: '可选：音乐音量 0~1' })
-    protected musicVolumeSlider: Slider | null = null;
+    @property(Label)
+    protected countryLabel: Label | null = null;
 
-    @property({type: Slider, tooltip: '可选：音效音量 0~1' })
-    protected sfxVolumeSlider: Slider | null = null;
+    @property(Sprite)
+    protected countrySp: Sprite | null = null;
 
-    /** 是否正在用代码回写 UI，避免触发保存逻辑 */
+    @property(Node)
+    protected countryNode: Node | null = null;
+
+    /** 绑定 `country/ToggleGroup`（子节点名为 zh-Hans、en、ja、zh-Hant、vi，各挂 Toggle） */
+    @property(Node)
+    protected languageToggleGroup: Node | null = null;
+
+    /** 绑定 country 下的关闭按钮（可选） */
+    @property(Button)
+    protected countryCloseButton: Button | null = null;
+
     private _syncingUi = false;
+    private _syncingLang = false;
 
-    /**
-     * 供关闭按钮在编辑器里绑定：关闭设置面板。
-     */
+    protected onEnable(): void {
+        I18n.instance.on(I18n.EVENT_LANGUAGE_CHANGED, this.onLanguageChanged, this);
+        this.refreshLanguageUi();
+    }
+
+    protected onDisable(): void {
+        I18n.instance.off(I18n.EVENT_LANGUAGE_CHANGED, this.onLanguageChanged, this);
+    }
+
+    private onLanguageChanged(): void {
+        this.refreshLanguageUi();
+    }
+
+    private refreshLanguageUi(): void {
+        this.refreshText();
+        this.syncLanguageTogglesFromI18n();
+    }
+
+    private refreshText(): void {
+        if (this.countryLabel?.isValid) {
+            this.countryLabel.string = I18n.instance.t('settings.language');
+        }
+    }
+
+    /** 打开语言面板：可将「语言」行按钮绑到此方法 */
+    public showCountry(): void {
+        if (this.countryNode?.isValid) {
+            this.countryNode.active = true;
+            this.syncLanguageTogglesFromI18n();
+        }
+    }
+
+    public closeCountry(): void {
+        if (this.countryNode?.isValid) {
+            this.countryNode.active = false;
+        }
+    }
+
+    /** 关闭语言面板按钮 */
+    public onCloseCountryClick(): void {
+        this.closeCountry();
+    }
+
     public onCloseClick(): void {
-        // 使用新UI框架关闭
         SimpleUIManager.instance.close(UIPanelId.SETTING);
     }
 
-    /** 打开时：从存档刷新界面并绑定控件事件 */
-    protected onUIOpen(data?: any): void {
+    protected onUIOpen(): void {
         this.refreshFromSettings();
         this.bindControls();
+        this.refreshLanguageUi();
     }
 
-    /** 关闭时：移除事件监听 */
-    protected onUIClose(data?: any): void {
+    protected onUIClose(): void {
         this.unbindControls();
     }
 
-    /** 从全局音频设置同步到 Toggle / Slider 显示 */
     private refreshFromSettings(): void {
         this._syncingUi = true;
         try {
+            const data = GlobalPlayerData.instance;
             if (this.soundToggle) {
-                this.soundToggle.isChecked = GameAudioSettings.isMusicEnabled();
+                this.soundToggle.isChecked = data.isMusicEnabled();
             }
             if (this.effectToggle) {
-                this.effectToggle.isChecked = GameAudioSettings.isSfxEnabled();
-            }
-            if (this.musicVolumeSlider) {
-                this.musicVolumeSlider.progress = GameAudioSettings.getMusicVolume();
-            }
-            if (this.sfxVolumeSlider) {
-                this.sfxVolumeSlider.progress = GameAudioSettings.getSfxVolume();
+                this.effectToggle.isChecked = data.isSfxEnabled();
             }
         } finally {
             this._syncingUi = false;
         }
     }
 
-    /** 注册开关与滑条的监听 */
     private bindControls(): void {
         if (this.soundToggle) {
             this.soundToggle.node.on(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
@@ -78,15 +120,12 @@ export default class SettingView extends SimpleUIBase {
         if (this.effectToggle) {
             this.effectToggle.node.on(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
         }
-        if (this.musicVolumeSlider) {
-            this.musicVolumeSlider.node.on('slide', this.onMusicVolumeSlide, this);
-        }
-        if (this.sfxVolumeSlider) {
-            this.sfxVolumeSlider.node.on('slide', this.onSfxVolumeSlide, this);
+        this.bindLanguageToggles();
+        if (this.countryCloseButton?.node?.isValid) {
+            this.countryCloseButton.node.on(Button.EventType.CLICK, this.onCloseCountryClick, this);
         }
     }
 
-    /** 取消注册，防止节点复用时重复监听 */
     private unbindControls(): void {
         if (this.soundToggle?.isValid) {
             this.soundToggle.node.off(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
@@ -94,43 +133,89 @@ export default class SettingView extends SimpleUIBase {
         if (this.effectToggle?.isValid) {
             this.effectToggle.node.off(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
         }
-        if (this.musicVolumeSlider?.isValid) {
-            this.musicVolumeSlider.node.off('slide', this.onMusicVolumeSlide, this);
-        }
-        if (this.sfxVolumeSlider?.isValid) {
-            this.sfxVolumeSlider.node.off('slide', this.onSfxVolumeSlide, this);
+        this.unbindLanguageToggles();
+        if (this.countryCloseButton?.node?.isValid) {
+            this.countryCloseButton.node.off(Button.EventType.CLICK, this.onCloseCountryClick, this);
         }
     }
 
-    /** 音乐开关变更：写入全局并持久化 */
+    private bindLanguageToggles(): void {
+        const root = this.languageToggleGroup;
+        if (!root?.isValid) {
+            return;
+        }
+        for (const child of root.children) {
+            const tg = child.getComponent(Toggle);
+            if (tg) {
+                tg.node.on(Toggle.EventType.TOGGLE, this.onLanguageToggle, this);
+            }
+        }
+    }
+
+    private unbindLanguageToggles(): void {
+        const root = this.languageToggleGroup;
+        if (!root?.isValid) {
+            return;
+        }
+        for (const child of root.children) {
+            const tg = child.getComponent(Toggle);
+            if (tg) {
+                tg.node.off(Toggle.EventType.TOGGLE, this.onLanguageToggle, this);
+            }
+        }
+    }
+
+    /** 根据当前 I18n 语言勾选对应 Toggle，不触发 setLocale */
+    private syncLanguageTogglesFromI18n(): void {
+        const root = this.languageToggleGroup;
+        if (!root?.isValid) {
+            return;
+        }
+        const locale = I18n.instance.locale;
+        this._syncingLang = true;
+        try {
+            for (const child of root.children) {
+                const tg = child.getComponent(Toggle);
+                if (tg) {
+                    tg.isChecked = child.name === locale;
+                }
+            }
+        } finally {
+            this._syncingLang = false;
+        }
+    }
+
+    private onLanguageToggle(toggle: Toggle): void {
+        if (this._syncingLang) {
+            return;
+        }
+        if (!toggle.isChecked) {
+            return;
+        }
+        const localeId = toggle.node.name;
+        void I18n.instance.setLocale(localeId).then(() => {
+            this.closeCountry();
+        });
+    }
+
+
+
     private onSoundToggle(toggle: Toggle): void {
         if (this._syncingUi) {
             return;
         }
-        GameAudioSettings.setMusicEnabled(toggle.isChecked);
+        GlobalPlayerData.instance.setMusicEnabled(toggle.isChecked);
     }
 
-    /** 音效开关变更：写入全局并持久化 */
     private onEffectToggle(toggle: Toggle): void {
         if (this._syncingUi) {
             return;
         }
-        GameAudioSettings.setSfxEnabled(toggle.isChecked);
+        GlobalPlayerData.instance.setSfxEnabled(toggle.isChecked);
     }
 
-    /** 音乐音量滑条拖动：更新全局音乐音量 */
-    private onMusicVolumeSlide(slider: Slider): void {
-        if (this._syncingUi) {
-            return;
-        }
-        GameAudioSettings.setMusicVolume(slider.progress);
-    }
 
-    /** 音效音量滑条拖动：更新全局音效音量 */
-    private onSfxVolumeSlide(slider: Slider): void {
-        if (this._syncingUi) {
-            return;
-        }
-        GameAudioSettings.setSfxVolume(slider.progress);
+    private closeView(): void {
+        SimpleUIManager.instance.close(UIPanelId.SETTING);
     }
 }

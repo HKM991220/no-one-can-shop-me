@@ -33,3 +33,19 @@ export const UI_PANEL_CONFIGS: UIConfig[] = [
 export function registerAllUIPanels(): void {
     SimpleUIManager.instance.registerBatch(UI_PANEL_CONFIGS);
 }
+
+/**
+ * 后台预加载游戏中会点开的面板（不阻塞当前流程）。
+ * 首次 open 时若未预加载，会同步等待 resources 加载 Prefab，表现为「点设置要等一下才出来」。
+ */
+export const UI_PANEL_PRELOAD_IDS: readonly string[] = [
+    UIPanelId.GAME,
+    UIPanelId.SETTING,
+    UIPanelId.SALA,
+];
+
+export function preloadCommonPanels(): void {
+    for (const id of UI_PANEL_PRELOAD_IDS) {
+        void SimpleUIManager.instance.preload(id);
+    }
+}

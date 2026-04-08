@@ -1,0 +1,14 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Hủy",
+    "loading": "Đang tải…"
+  },
+  "settings": {
+    "title": "Cài đặt",
+    "music": "Nhạc",
+    "sound": "Hiệu ứng",
+    "language": "Ngôn ngữ",
+    "country": "Quốc gia"
+  }
+}

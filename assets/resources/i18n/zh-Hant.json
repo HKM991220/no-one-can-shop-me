@@ -1,0 +1,14 @@
+{
+  "common": {
+    "ok": "確定",
+    "cancel": "取消",
+    "loading": "載入中…"
+  },
+  "settings": {
+    "title": "設置",
+    "music": "音樂",
+    "sound": "音效",
+    "language": "語言",
+    "country": "國家"
+  }
+}

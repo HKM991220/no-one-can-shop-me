@@ -2,9 +2,10 @@ import { _decorator, Component, Node } from 'cc';
 import { GameBootstrap } from './common/GameBootstrap';
 import { installScreenAdaptation, uninstallScreenAdaptation } from './common/ScreenAdapter';
 import { SimpleUIManager } from './common/ui/SimpleUIManager';
-import { registerAllUIPanels, UIPanelId } from './common/ui/UIPanelRegistry';
+import { preloadCommonPanels, registerAllUIPanels, UIPanelId } from './common/ui/UIPanelRegistry';
 import { HotUpdateService } from './common/hotupdate/HotUpdateService';
 import { TTMinis } from './common/sdk/TTMinis';
+import { I18n } from './common/i18n/I18n';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -21,6 +22,7 @@ export class Mian extends Component {
         installScreenAdaptation('auto');
         HotUpdateService.instance.applyStoredSearchPaths();
         await GameBootstrap.ensureReady();
+        await I18n.instance.init();
         // 须在任何 UI（如 Loading）里调用 TT 能力之前完成，否则 TTMinis.inst 尚未赋值
         TTMinis.ensureInitialized();
 
@@ -28,6 +30,8 @@ export class Mian extends Component {
         const root = this.viewNode ?? this.node;
         SimpleUIManager.instance.init(root);
         registerAllUIPanels();
+        // 与 Loading 并行拉取 Game / Setting / Sala 预制体，避免进游戏后首次点开设置要等资源
+        preloadCommonPanels();
 
         // 预加载并打开Loading界面
         await SimpleUIManager.instance.preload(UIPanelId.LOADING);

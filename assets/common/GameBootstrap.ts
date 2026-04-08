@@ -1,6 +1,7 @@
 import {_decorator, Component, director, Node} from 'cc';
 import {GameAudioSettings} from './AudioSetting';
 import {AudioManager} from './AudioManager';
+import {GlobalPlayerData} from './GlobalPlayerData';
 import {ResManager} from './ResManager';
 
 const {ccclass} = _decorator;
@@ -75,6 +76,7 @@ export class GameBootstrap extends Component {
 
         await Promise.all([boot._res.ensureReady(), boot._audio.ensureReady()]);
         GameAudioSettings.registerAudioManager(boot._audio);
+        GlobalPlayerData.instance.load();
         return boot;
     }
 
