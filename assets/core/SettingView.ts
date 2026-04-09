@@ -1,4 +1,4 @@
-import { _decorator, Button, Label, Node, Sprite, Toggle } from 'cc';
+import { _decorator, Button, Label, Node, Sprite, SpriteFrame, Toggle } from 'cc';
 import { GlobalPlayerData } from '../common/GlobalPlayerData';
 import { SimpleUIBase } from '../common/ui/SimpleUIBase';
 import { SimpleUIManager } from '../common/ui/SimpleUIManager';
@@ -26,6 +26,21 @@ export default class SettingView extends SimpleUIBase {
 
     @property(Sprite)
     protected countrySp: Sprite | null = null;
+
+    @property(SpriteFrame)
+    protected flagZhHans: SpriteFrame | null = null;
+
+    @property(SpriteFrame)
+    protected flagEn: SpriteFrame | null = null;
+
+    @property(SpriteFrame)
+    protected flagJa: SpriteFrame | null = null;
+
+    @property(SpriteFrame)
+    protected flagZhHant: SpriteFrame | null = null;
+
+    @property(SpriteFrame)
+    protected flagVi: SpriteFrame | null = null;
 
     @property(Node)
     protected countryNode: Node | null = null;
@@ -59,6 +74,7 @@ export default class SettingView extends SimpleUIBase {
 
     private refreshLanguageUi(): void {
         this.refreshText();
+        this.refreshCountryFlag();
         this.syncLanguageTogglesFromI18n();
     }
 
@@ -66,6 +82,32 @@ export default class SettingView extends SimpleUIBase {
         if (this.countryLabel?.isValid) {
             this.countryLabel.string = I18n.instance.t('settings.language');
         }
+    }
+
+    private refreshCountryFlag(): void {
+        if (!this.countrySp?.isValid) {
+            return;
+        }
+        const frame = this.getFlagByLocale(I18n.instance.locale);
+        if (frame) {
+            this.countrySp.spriteFrame = frame;
+        }
+    }
+
+    private getFlagByLocale(locale: string): SpriteFrame | null {
+        if (locale === 'en') {
+            return this.flagEn;
+        }
+        if (locale === 'ja') {
+            return this.flagJa;
+        }
+        if (locale === 'zh-Hant') {
+            return this.flagZhHant;
+        }
+        if (locale === 'vi') {
+            return this.flagVi;
+        }
+        return this.flagZhHans;
     }
 
     /** 打开语言面板：可将「语言」行按钮绑到此方法 */

@@ -9,5 +9,11 @@
     "music": "Music",
     "sound": "Sound",
     "language": "Language"
+  },
+  "tutorial": {
+    "step1": "Tap this bottle.",
+    "step2": "Now tap this bottle to pour.",
+    "step3": "Great, try one more time.",
+    "step4": "Sort same-color water into one bottle to clear the level."
   }
 }

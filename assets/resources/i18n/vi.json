@@ -10,5 +10,11 @@
     "sound": "Hiệu ứng",
     "language": "Ngôn ngữ",
     "country": "Quốc gia"
+  },
+  "tutorial": {
+    "step1": "Chạm vào chai này.",
+    "step2": "Bây giờ chạm vào chai này để rót.",
+    "step3": "Tốt lắm, thử thêm một lần nữa.",
+    "step4": "Gộp nước cùng màu vào một chai để qua màn."
   }
 }

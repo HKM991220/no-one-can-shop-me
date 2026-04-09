@@ -46,7 +46,7 @@ export class VwUi extends Component {
     protected settingButton: Button;
 
     @property(Node)
-    protected bottomNode: Node;
+    protected bottomNode: Node | null = null;
 
 
     @property(TutorialGuide)
@@ -67,10 +67,8 @@ export class VwUi extends Component {
     private colorBottleTarget: Record<number, number> = {};
 
     public reset(info: CwgStateInfo) {
-        if (info.level === 0) {
-            this.bottomNode.active = false;
-        } else {
-            this.bottomNode.active = true;
+        if (this.bottomNode?.isValid) {
+            this.bottomNode.active = info.level !== 0;
         }
         GlobalPlayerData.instance.load();
         this.levelLabel.string = '第' + (info.level + 1).toString() + '关';

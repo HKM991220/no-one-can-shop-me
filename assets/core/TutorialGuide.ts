@@ -1,6 +1,7 @@
 import { _decorator, Component, Label, Node, Tween, tween, Vec3 } from "cc";
 import { GlobalPlayerData } from "../common/GlobalPlayerData";
 import EventMng from "../common/EventMng";
+import { I18n } from "../common/i18n/I18n";
 import Glass from "./Glass";
 import { VwFunland } from "./VwFunland";
 import { EventName } from "../common/Enum";
@@ -162,8 +163,6 @@ export default class TutorialGuide extends Component {
             }
         }
 
-
-
         if (!this.funlandView) {
             this.funlandView =
                 this.node.getComponent(VwFunland) ??
@@ -219,28 +218,28 @@ export default class TutorialGuide extends Component {
         }
         console.log("[TutorialGuide] applyStep", this.step);
         if (this.step === TutorialStep.SelectSource) {
-            this.setTip("点击这个瓶子");
+            this.setTipByKey("tutorial.step1");
             this.followTarget(this.sourceGlass);
             this.followHighlight(this.targetGlass);
             this.funlandView?.setSelectValidator((glass) => glass === this.sourceGlass);
             return;
         }
         if (this.step === TutorialStep.SelectTarget) {
-            this.setTip("再点击这个瓶子，把水倒过去");
+            this.setTipByKey("tutorial.step2");
             this.followTarget(this.targetGlass);
             this.followHighlight(this.targetGlass);
             this.funlandView?.setSelectValidator((glass) => glass === this.targetGlass);
             return;
         }
         if (this.step === TutorialStep.FreePour) {
-            this.setTip("很好，再试一次");
+            this.setTipByKey("tutorial.step3");
             this.hideFinger();
             this.hideHighlight();
             this.funlandView?.setSelectValidator(null);
             return;
         }
         if (this.step === TutorialStep.Finish) {
-            this.setTip("将同色液体放到同一瓶，完成通关");
+            this.setTipByKey("tutorial.step4");
             this.hideFinger();
             this.hideHighlight();
             this.funlandView?.setSelectValidator(null);
@@ -253,6 +252,10 @@ export default class TutorialGuide extends Component {
         if (this.tipLabel?.isValid) {
             this.tipLabel.string = text;
         }
+    }
+
+    private setTipByKey(key: string): void {
+        this.setTip(I18n.instance.t(key));
     }
 
     private followTarget(glass: Glass | null): void {
