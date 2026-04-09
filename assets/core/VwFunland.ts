@@ -45,6 +45,7 @@ export class VwFunland extends Component {
     public undoStack: [Glass, WaterColor[]][] = undefined;
 
     public finished: boolean = false;
+    private selectValidator: ((glass: Glass) => boolean) | null = null;
 
     protected onLoad() {
         console.log("StVwFunland")
@@ -110,6 +111,7 @@ export class VwFunland extends Component {
                 this.handleAdGlass(currentSelected);
                 return;
             }
+            EventMng.emit('tutorial:selectGlass', currentSelected);
 
             // 处理重复点击同一玻璃瓶
             if (lastSelectedGlass && currentSelected == lastSelectedGlass) {
@@ -144,11 +146,18 @@ export class VwFunland extends Component {
     }
 
     private isValidSelection(glass: Glass) {
-        return glass?.node.active && !glass.isSealed();
+        if (!(glass?.node.active && !glass.isSealed())) {
+            return false;
+        }
+        if (this.selectValidator && !this.selectValidator(glass)) {
+            return false;
+        }
+        return true;
     }
 
     private handleWaterTransfer(source: Glass, target: Glass) {
         if (source.waterColorID === target.waterColorID || target.isEmpty) {
+            EventMng.emit('tutorial:pour', { source, target });
             this.playPourOutWater(source, target);
             return true;
         }
@@ -267,6 +276,10 @@ export class VwFunland extends Component {
     public playStart() {
         this.setTouchListener();
         this.finished = false;
+    }
+
+    public setSelectValidator(validator: ((glass: Glass) => boolean) | null): void {
+        this.selectValidator = validator;
     }
 
     protected handleAdGlass(glass: Glass) {

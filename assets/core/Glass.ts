@@ -6,25 +6,25 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2025-07-22
  */
-import {_decorator, Color, Component, Node, Sprite, tween, UIOpacity, UITransform} from 'cc';
-import {WaterColor, WaterColors} from './CwgConstant';
+import { _decorator, Color, Component, Node, Sprite, tween, UIOpacity, UITransform } from 'cc';
+import { WaterColor, WaterColors } from './CwgConstant';
 import WaterSurface from './glass-anims/WaterSurface';
 import { GlassInfo } from './FunlandInfo';
 
-const {ccclass, menu, property} = _decorator;
+const { ccclass, menu, property } = _decorator;
 
 
 @ccclass('Glass')
 @menu('cwg/Glass')
 export default class Glass extends Component {
 
-    @property({type: Node, tooltip: '瓶体碰撞节点（用于触摸检测）'})
+    @property({ type: Node, tooltip: '瓶体碰撞节点（用于触摸检测）' })
     protected glassNode: Node;
 
-    @property({type: Node, tooltip: '水层节点容器（包含4层水柱节点）'})
+    @property({ type: Node, tooltip: '水层节点容器（包含4层水柱节点）' })
     protected watersNode: Node;
 
-    @property({type: Node, tooltip: '密封状态瓶盖节点'})
+    @property({ type: Node, tooltip: '密封状态瓶盖节点' })
     protected capNode: Node;                // 瓶盖
 
     @property
@@ -33,8 +33,8 @@ export default class Glass extends Component {
     @property
     public pickupHeight: number = 32;
 
-    @property(Node)
-    public shadowNode: Node;
+    // @property(Node)
+    // public shadowNode: Node;
 
     @property(WaterSurface)
     protected waterSurface: WaterSurface;
@@ -102,7 +102,7 @@ export default class Glass extends Component {
     // 根据水多水少调整影子的颜色深浅
     private updateShadowOpacity() {
         const opacityLevels = [64, 80, 96, 112, 128];
-        this.shadowNode.getComponent(UIOpacity).opacity = opacityLevels[this.waters.length];
+        // this.shadowNode.getComponent(UIOpacity).opacity = opacityLevels[this.waters.length];
     }
 
     // 每一层水都有一个水面，需要隐藏其他层的水面，显示最上层的水面
@@ -148,8 +148,8 @@ export default class Glass extends Component {
         const baseColor = new Color(WaterColors[waterColor].base);
         const surfaceColor = new Color(WaterColors[waterColor].surface);
         if (black2color) {
-            tween(waterSprite).to(0.3, {color: baseColor}).start();
-            tween(surfaceSprite).to(0.3, {color: surfaceColor}).start();
+            tween(waterSprite).to(0.3, { color: baseColor }).start();
+            tween(surfaceSprite).to(0.3, { color: surfaceColor }).start();
         } else {
             waterSprite.color = baseColor;
             surfaceSprite.color = surfaceColor;
@@ -162,8 +162,8 @@ export default class Glass extends Component {
             return;
         }
         this.isPickedUp = false;
-        tween(this.glassNode).to(0.17, {y: 0}).start();
-        tween(this.shadowNode).to(0.17, {x: 0, y: 0}).start();
+        tween(this.glassNode).to(0.17, { y: 0 }).start();
+        // tween(this.shadowNode).to(0.17, {x: 0, y: 0}).start();
         this.resetSurface();
     }
 
@@ -174,8 +174,8 @@ export default class Glass extends Component {
         }
         this.isPickedUp = true;
         this.glassNode.y = this.pickupHeight;
-        tween(this.glassNode).to(0.17, {y: this.pickupHeight}).start();
-        tween(this.shadowNode).to(0.17, {x: 17.3, y: 10}).start();
+        tween(this.glassNode).to(0.17, { y: this.pickupHeight }).start();
+        // tween(this.shadowNode).to(0.17, {x: 17.3, y: 10}).start();
         this.resetSurface();
     }
 
@@ -287,7 +287,7 @@ export default class Glass extends Component {
     }
 
     public toString() {
-        return JSON.stringify({waters: this.waters});
+        return JSON.stringify({ waters: this.waters });
     }
 
 }

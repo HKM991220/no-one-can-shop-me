@@ -14,6 +14,9 @@ import { VwExchange } from './prop-anims/VwExchange';
 import { VwAddGlass } from './prop-anims/VwAddGlass';
 import { SimpleUIManager } from '../common/ui/SimpleUIManager';
 import { UIPanelId } from '../common/ui/UIPanelRegistry';
+import { GlobalPlayerData } from '../common/GlobalPlayerData';
+import TutorialGuide from './TutorialGuide';
+import { EventName } from '../common/Enum';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -43,10 +46,11 @@ export class VwUi extends Component {
     protected settingButton: Button;
 
     @property(Node)
-    public settingViewRoot: Node | null = null;
+    protected bottomNode: Node;
 
-    @property(Node)
-    public settingAttachParent: Node | null = null;
+
+    @property(TutorialGuide)
+    protected tutorialGuide: TutorialGuide | null = null;
 
     protected onEnable(): void {
         if (this.settingButton?.isValid) {
@@ -63,6 +67,12 @@ export class VwUi extends Component {
     private colorBottleTarget: Record<number, number> = {};
 
     public reset(info: CwgStateInfo) {
+        if (info.level === 0) {
+            this.bottomNode.active = false;
+        } else {
+            this.bottomNode.active = true;
+        }
+        GlobalPlayerData.instance.load();
         this.levelLabel.string = '第' + (info.level + 1).toString() + '关';
         EventMng.off('completePour', this.handleCompletePour, this);
         EventMng.on('completePour', this.handleCompletePour, this);
@@ -73,6 +83,13 @@ export class VwUi extends Component {
         }
         if (this.addGlassView) {
             this.addGlassView.node.active = false;
+        }
+        if (!this.tutorialGuide) {
+            this.tutorialGuide = this.getComponentInChildren(TutorialGuide);
+        }
+        this.tutorialGuide?.bindFunlandView(this.funlandView);
+        if (GlobalPlayerData.instance.level === 0) {
+            this.tutorialGuide?.beginIfNeeded();
         }
     }
 

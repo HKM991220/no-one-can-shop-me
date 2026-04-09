@@ -6,13 +6,14 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime:2025-07-20
  */
-import {_decorator, Component, director} from 'cc';
-import {VwFunland} from "./VwFunland";
-import {VwUi} from "./VwUi";
+import { _decorator, Component, director ,Node} from 'cc';
+import { VwFunland } from "./VwFunland";
+import { VwUi } from "./VwUi";
 import CwgState from "./CwgState";
 import FunlandInfo from './FunlandInfo';
+import { GlobalPlayerData } from '../common/GlobalPlayerData';
 
-const {ccclass, menu, property} = _decorator;
+const { ccclass, menu, property } = _decorator;
 
 @ccclass('VwPlay')
 @menu('cwg/VwPlay')
@@ -24,6 +25,9 @@ export class VwPlay extends Component {
     @property(VwUi)
     protected ui: VwUi;
 
+    @property(Node)
+    protected blockerNode: Node | null = null;
+
     public funland: FunlandInfo;
     public gameState: CwgState;
 
@@ -31,6 +35,11 @@ export class VwPlay extends Component {
         this.gameState = new CwgState();
         this.funland = new FunlandInfo();
         this.funland.init(this.gameState);
+        if (GlobalPlayerData.instance.level === 0) {
+            this.blockerNode.active = true;
+        }else{
+            this.blockerNode.active = false;
+        }
 
         this.restartLevel();
     }

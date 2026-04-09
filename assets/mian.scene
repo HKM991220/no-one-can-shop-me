@@ -693,7 +693,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 71.24995422363281,
+      "width": 18.539993286132812,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -723,7 +723,7 @@
       "b": 41,
       "a": 255
     },
-    "_string": "label",
+    "_string": "0",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 30,
@@ -974,7 +974,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 71.24995422363281,
+      "width": 18.539993286132812,
       "height": 50.4
     },
     "_anchorPoint": {
@@ -1004,7 +1004,7 @@
       "b": 41,
       "a": 255
     },
-    "_string": "label",
+    "_string": "0",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 30,
@@ -1530,7 +1530,9 @@
     "labelGold": {
       "__id__": 17
     },
-    "labelStamina": null,
+    "labelStamina": {
+      "__id__": 24
+    },
     "_id": "6aYGRayXJCOZ9c59pMj7tW"
   },
   {

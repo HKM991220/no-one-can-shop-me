@@ -6,13 +6,13 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2025-07-22
  */
-import {_decorator, Animation, AnimationClip, Color, math, Node, Sprite, tween, UIOpacity, v3, Vec3} from 'cc';
+import { _decorator, Animation, AnimationClip, Color, math, Node, Sprite, tween, UIOpacity, v3, Vec3 } from 'cc';
 import Glass from "../Glass";
-import {WaterColor, WaterColors} from "../CwgConstant";
+import { WaterColor, WaterColors } from "../CwgConstant";
 import Toolkit from '../../common/Toolkit';
 import { GlassInfo } from '../FunlandInfo';
 
-const {ccclass, menu, property} = _decorator;
+const { ccclass, menu, property } = _decorator;
 
 
 @ccclass('GlassPourOut')
@@ -64,17 +64,17 @@ export default class GlassPourOut extends Glass {
             this.oriPosition.x -= 17.244 * 2;
         }
         this.node.worldPosition = from;
-        tween(this.node).to(0.666, {worldPosition: to}).start();
+        tween(this.node).to(0.666, { worldPosition: to }).start();
 
         // 影子飞走
-        if (this.shadowNode) {
-            this.shadowNode.position = v3(0, 0, 0);
-            tween(this.shadowNode).to(0.3, {x: 380 * this.node.scale.x, y: 22}).start();
-            const uiOpacity = this.shadowNode.getComponent(UIOpacity);
-            if (uiOpacity) {
-                tween(uiOpacity).to(0.3, {opacity: 0}).start();
-            }
-        }
+        // if (this.shadowNode) {
+        //     this.shadowNode.position = v3(0, 0, 0);
+        //     tween(this.shadowNode).to(0.3, {x: 380 * this.node.scale.x, y: 22}).start();
+        //     const uiOpacity = this.shadowNode.getComponent(UIOpacity);
+        //     if (uiOpacity) {
+        //         tween(uiOpacity).to(0.3, {opacity: 0}).start();
+        //     }
+        // }
         this.frontNode.scale = this.node.scale;
     }
 
@@ -85,10 +85,10 @@ export default class GlassPourOut extends Glass {
     public putDownBack() {
         const layerID = this.startColumnIndex + 1;
         const speed = [0, 6, 5, 4, 3][layerID];
-        const tw = tween(this.node).to((0.666 + ((5 - layerID) * 0.333)) / speed, {worldPosition: this.oriPosition});
+        const tw = tween(this.node).to((0.666 + ((5 - layerID) * 0.333)) / speed, { worldPosition: this.oriPosition });
         return Toolkit.waitForTween(tw);
     }
-    
+
     /**
      * 处理倒水完成事件
      * @param currentLayerIdx 当前液体层Index
@@ -152,7 +152,7 @@ export default class GlassPourOut extends Glass {
             this._eventCallbacks.startPour?.(layerIdx, colorIdx);
 
             const color = Color.WHITE.fromHEX(WaterColors[colorIdx].base);
-      
+
         }
     }
 
@@ -192,6 +192,6 @@ export default class GlassPourOut extends Glass {
     // 在回收方法中清理回调
     public recycle() {
         this._eventCallbacks = {};
-   
+
     }
 }

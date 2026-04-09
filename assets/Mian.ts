@@ -1,15 +1,8 @@
 import { _decorator, Button, Component, Label, Node } from "cc";
 import { GameBootstrap } from "./common/GameBootstrap";
-import {
-    installScreenAdaptation,
-    uninstallScreenAdaptation,
-} from "./common/ScreenAdapter";
+import { installScreenAdaptation, uninstallScreenAdaptation } from "./common/ScreenAdapter";
 import { SimpleUIManager } from "./common/ui/SimpleUIManager";
-import {
-    registerAllUIPanels,
-    UI_PANEL_PRELOAD_IDS,
-    UIPanelId,
-} from "./common/ui/UIPanelRegistry";
+import { registerAllUIPanels, UI_PANEL_PRELOAD_IDS, UIPanelId } from "./common/ui/UIPanelRegistry";
 import { HotUpdateService } from "./common/hotupdate/HotUpdateService";
 import { TTMinis } from "./common/sdk/TTMinis";
 import { I18n } from "./common/i18n/I18n";
@@ -85,11 +78,7 @@ export class Mian extends Component {
         registerAllUIPanels();
 
         const res = GameBootstrap.instance.res;
-        await Promise.all([
-            ...Mian.ENTRY_BUNDLE_NAMES.map((name) => res.loadBundle(name)),
-            ...UI_PANEL_PRELOAD_IDS.map((id) => SimpleUIManager.instance.preload(id)),
-            Mian.autoLoginDuringLoad(),
-        ]);
+        await Promise.all([...Mian.ENTRY_BUNDLE_NAMES.map((name) => res.loadBundle(name)), ...UI_PANEL_PRELOAD_IDS.map((id) => SimpleUIManager.instance.preload(id)), Mian.autoLoginDuringLoad()]);
 
         this.initUI();
 
@@ -104,12 +93,12 @@ export class Mian extends Component {
                     pushToStack: false,
                 });
             }
-
         }
     }
 
     initUI(): void {
         const playerData = GlobalPlayerData.instance;
+        this.topNode.active = playerData.level === 0 ? false : true;
         if (this.labelGold?.isValid) {
             this.labelGold.string = `${playerData.coins}`;
         }
@@ -117,6 +106,8 @@ export class Mian extends Component {
             this.labelStamina.string = `${playerData.stamina}`;
         }
     }
+
+
 
     /** 与 LoadingView.tryAutoLogin 一致：加载阶段静默登录；非抖音/失败不阻塞进游戏 */
     private static async autoLoginDuringLoad(): Promise<void> {

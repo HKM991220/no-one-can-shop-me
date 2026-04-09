@@ -46,10 +46,10 @@ export default class FunlandInfo {
      * @remarks 当关卡数≤0时不执行操作
      */
     public preLevel() {
-        if (this.state.info.level <= 0) {
+        if (this.state.getLevel() <= 0) {
             return;
         }
-        this.state.info.level--;
+        this.state.setLevel(this.state.getLevel() - 1);
         this.state.save();
     }
 
@@ -58,7 +58,7 @@ export default class FunlandInfo {
      * @todo 实现关卡循环逻辑
      */
     public nextLevel() {
-        this.state.info.level++;
+        this.state.setLevel(this.state.getLevel() + 1);
         this.state.save();
     }
 
