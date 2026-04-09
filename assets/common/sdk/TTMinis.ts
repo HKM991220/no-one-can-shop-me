@@ -4,6 +4,16 @@ const { ccclass } = _decorator;
 
 declare const tt: any;
 
+/** 抖音小游戏胶囊按钮在可视区域内的布局（像素，与 tt.getMenuButtonBoundingClientRect 一致） */
+export interface TTMenuButtonRect {
+	left: number;
+	top: number;
+	right: number;
+	bottom: number;
+	width: number;
+	height: number;
+}
+
 @ccclass("TTMinis")
 export class TTMinis extends Component {
 	public static inst: TTMinis;
@@ -321,10 +331,10 @@ export class TTMinis extends Component {
 			TTMinis.adOpToPromise(ad.load())
 				.then(() => tryShow())
 				.catch((err: unknown) => {
-				console.error("[TTMinis] 插屏广告加载失败:", err);
-				this.toast("广告加载失败");
-				onFail?.(err);
-			});
+					console.error("[TTMinis] 插屏广告加载失败:", err);
+					this.toast("广告加载失败");
+					onFail?.(err);
+				});
 		} else {
 			void tryShow();
 		}
@@ -459,5 +469,27 @@ export class TTMinis extends Component {
 		}
 		await this.startEntranceMission();
 		this.toast("请从侧边栏重新进入领取");
+	}
+
+	/**
+	 * 获取右上角菜单（胶囊）按钮的布局矩形，用于自定义导航栏与安全区对齐。
+	 * 非抖音环境或不支持该 API 时返回 null。
+	 */
+	getMenuButtonBoundingClientRect(): TTMenuButtonRect | null {
+		if (!this.isInTT || typeof tt?.getMenuButtonBoundingClientRect !== "function") {
+			return null;
+		}
+		const rect = tt.getMenuButtonBoundingClientRect();
+		if (!rect) {
+			return null;
+		}
+		return {
+			left: rect.left,
+			top: rect.top,
+			right: rect.right,
+			bottom: rect.bottom,
+			width: rect.width,
+			height: rect.height,
+		};
 	}
 }

@@ -49,7 +49,7 @@ export class Mian extends Component {
     protected labelGold: Label | null = null;
 
     @property({ type: Label, tooltip: "体力" })
-    protected labelPower: Label | null = null;
+    protected labelStamina: Label | null = null;
 
     /**
      * 除 `resources`（已在 GameBootstrap / ResManager.ensureReady 中加载）外，
@@ -106,8 +106,8 @@ export class Mian extends Component {
         if (this.labelGold?.isValid) {
             this.labelGold.string = `${playerData.coins}`;
         }
-        if (this.labelPower?.isValid) {
-            this.labelPower.string = `${playerData.stamina}`;
+        if (this.labelStamina?.isValid) {
+            this.labelStamina.string = `${playerData.stamina}`;
         }
     }
 

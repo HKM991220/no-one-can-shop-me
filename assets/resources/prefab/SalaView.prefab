@@ -1887,7 +1887,7 @@
     },
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": -200.62,
+      "x": 217.482,
       "y": 420.247,
       "z": 0
     },
@@ -3559,7 +3559,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "+10",
+    "_string": "金币+10",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -3931,7 +3931,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "-10",
+    "_string": "金币-10",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -4303,7 +4303,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "+10",
+    "_string": "体力+10",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
@@ -4675,7 +4675,7 @@
       "b": 0,
       "a": 255
     },
-    "_string": "-10",
+    "_string": "体力-10",
     "_horizontalAlign": 1,
     "_verticalAlign": 1,
     "_actualFontSize": 20,
