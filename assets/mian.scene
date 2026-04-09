@@ -20,16 +20,16 @@
         "__id__": 2
       },
       {
-        "__id__": 39
+        "__id__": 40
       },
       {
-        "__id__": 43
+        "__id__": 44
       }
     ],
     "_active": true,
     "_components": [],
     "_prefab": {
-      "__id__": 45
+      "__id__": 46
     },
     "_lpos": {
       "__type__": "cc.Vec3",
@@ -60,7 +60,7 @@
     },
     "autoReleaseAssets": true,
     "_globals": {
-      "__id__": 46
+      "__id__": 47
     },
     "_id": "2913e669-74bd-43e8-9b31-510db5daaa77"
   },
@@ -83,14 +83,11 @@
         "__id__": 8
       },
       {
-        "__id__": 29
+        "__id__": 30
       }
     ],
     "_active": true,
     "_components": [
-      {
-        "__id__": 35
-      },
       {
         "__id__": 36
       },
@@ -99,6 +96,9 @@
       },
       {
         "__id__": 38
+      },
+      {
+        "__id__": 39
       }
     ],
     "_prefab": null,
@@ -344,10 +344,10 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 27
+        "__id__": 28
       },
       {
-        "__id__": 28
+        "__id__": 29
       }
     ],
     "_prefab": null,
@@ -663,7 +663,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "energy",
+    "_name": "power",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
@@ -944,7 +944,7 @@
   },
   {
     "__type__": "cc.Node",
-    "_name": "shezhi",
+    "_name": "setting",
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
@@ -961,6 +961,9 @@
       },
       {
         "__id__": 26
+      },
+      {
+        "__id__": 27
       }
     ],
     "_prefab": null,
@@ -1085,6 +1088,56 @@
     "_id": "e0Gj3B251P54/YbKWHKbfM"
   },
   {
+    "__type__": "cc.Button",
+    "_name": "",
+    "_objFlags": 0,
+    "__editorExtras__": {},
+    "node": {
+      "__id__": 23
+    },
+    "_enabled": true,
+    "__prefab": null,
+    "clickEvents": [],
+    "_interactable": true,
+    "_transition": 3,
+    "_normalColor": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_hoverColor": {
+      "__type__": "cc.Color",
+      "r": 211,
+      "g": 211,
+      "b": 211,
+      "a": 255
+    },
+    "_pressedColor": {
+      "__type__": "cc.Color",
+      "r": 255,
+      "g": 255,
+      "b": 255,
+      "a": 255
+    },
+    "_disabledColor": {
+      "__type__": "cc.Color",
+      "r": 124,
+      "g": 124,
+      "b": 124,
+      "a": 255
+    },
+    "_normalSprite": null,
+    "_hoverSprite": null,
+    "_pressedSprite": null,
+    "_disabledSprite": null,
+    "_duration": 0.9,
+    "_zoomScale": 1,
+    "_target": null,
+    "_id": "17gnVNNXRM9KDX2URyX2i/"
+  },
+  {
     "__type__": "cc.UITransform",
     "_name": "",
     "_objFlags": 0,
@@ -1146,16 +1199,16 @@
     },
     "_children": [
       {
-        "__id__": 30
+        "__id__": 31
       }
     ],
     "_active": false,
     "_components": [
       {
-        "__id__": 33
+        "__id__": 34
       },
       {
-        "__id__": 34
+        "__id__": 35
       }
     ],
     "_prefab": null,
@@ -1194,16 +1247,16 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
-      "__id__": 29
+      "__id__": 30
     },
     "_children": [],
     "_active": true,
     "_components": [
       {
-        "__id__": 31
+        "__id__": 32
       },
       {
-        "__id__": 32
+        "__id__": 33
       }
     ],
     "_prefab": null,
@@ -1242,7 +1295,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 30
+      "__id__": 31
     },
     "_enabled": true,
     "__prefab": null,
@@ -1264,7 +1317,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 30
+      "__id__": 31
     },
     "_enabled": true,
     "__prefab": null,
@@ -1303,7 +1356,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 29
+      "__id__": 30
     },
     "_enabled": true,
     "__prefab": null,
@@ -1325,7 +1378,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 29
+      "__id__": 30
     },
     "_enabled": true,
     "__prefab": null,
@@ -1434,7 +1487,16 @@
       "__id__": 8
     },
     "loadingNode": {
-      "__id__": 29
+      "__id__": 30
+    },
+    "btnSetting": {
+      "__id__": 27
+    },
+    "labelGold": {
+      "__id__": 12
+    },
+    "labelPower": {
+      "__id__": 19
     },
     "_id": "6aYGRayXJCOZ9c59pMj7tW"
   },
@@ -1448,13 +1510,13 @@
     },
     "_children": [
       {
-        "__id__": 40
+        "__id__": 41
       }
     ],
     "_active": false,
     "_components": [
       {
-        "__id__": 42
+        "__id__": 43
       }
     ],
     "_prefab": null,
@@ -1493,13 +1555,13 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "_parent": {
-      "__id__": 39
+      "__id__": 40
     },
     "_children": [],
     "_active": true,
     "_components": [
       {
-        "__id__": 41
+        "__id__": 42
       }
     ],
     "_prefab": null,
@@ -1538,7 +1600,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 40
+      "__id__": 41
     },
     "_enabled": true,
     "__prefab": null,
@@ -1554,12 +1616,12 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 39
+      "__id__": 40
     },
     "_enabled": true,
     "__prefab": null,
     "audioSource": {
-      "__id__": 41
+      "__id__": 42
     },
     "waterClips": [
       {
@@ -1593,7 +1655,7 @@
     "_active": true,
     "_components": [
       {
-        "__id__": 44
+        "__id__": 45
       }
     ],
     "_prefab": null,
@@ -1632,7 +1694,7 @@
     "_objFlags": 0,
     "__editorExtras__": {},
     "node": {
-      "__id__": 43
+      "__id__": 44
     },
     "_enabled": true,
     "__prefab": null,
@@ -1649,28 +1711,28 @@
   {
     "__type__": "cc.SceneGlobals",
     "ambient": {
-      "__id__": 47
-    },
-    "shadows": {
       "__id__": 48
     },
-    "_skybox": {
+    "shadows": {
       "__id__": 49
     },
-    "fog": {
+    "_skybox": {
       "__id__": 50
     },
-    "octree": {
+    "fog": {
       "__id__": 51
     },
-    "skin": {
+    "octree": {
       "__id__": 52
     },
-    "lightProbeInfo": {
+    "skin": {
       "__id__": 53
     },
-    "postSettings": {
+    "lightProbeInfo": {
       "__id__": 54
+    },
+    "postSettings": {
+      "__id__": 55
     },
     "bakedWithStationaryMainLight": false,
     "bakedWithHighpLightmap": false

@@ -1,30 +1,55 @@
-import { _decorator, Component, Node } from 'cc';
-import { GameBootstrap } from './common/GameBootstrap';
-import { installScreenAdaptation, uninstallScreenAdaptation } from './common/ScreenAdapter';
-import { SimpleUIManager } from './common/ui/SimpleUIManager';
-import { registerAllUIPanels, UI_PANEL_PRELOAD_IDS, UIPanelId } from './common/ui/UIPanelRegistry';
-import { HotUpdateService } from './common/hotupdate/HotUpdateService';
-import { TTMinis } from './common/sdk/TTMinis';
-import { I18n } from './common/i18n/I18n';
+import { _decorator, Button, Component, Label, Node } from "cc";
+import { GameBootstrap } from "./common/GameBootstrap";
+import {
+    installScreenAdaptation,
+    uninstallScreenAdaptation,
+} from "./common/ScreenAdapter";
+import { SimpleUIManager } from "./common/ui/SimpleUIManager";
+import {
+    registerAllUIPanels,
+    UI_PANEL_PRELOAD_IDS,
+    UIPanelId,
+} from "./common/ui/UIPanelRegistry";
+import { HotUpdateService } from "./common/hotupdate/HotUpdateService";
+import { TTMinis } from "./common/sdk/TTMinis";
+import { I18n } from "./common/i18n/I18n";
+import { GlobalPlayerData } from "./common/GlobalPlayerData";
+import EventMng from "./common/EventMng";
+import { EventName } from "./common/Enum";
 
 const { ccclass, menu, property } = _decorator;
 
 /**
  * 主场景入口：使用新UI框架 SimpleUIManager
  */
-@ccclass('Mian')
-@menu('cwg/Mian')
+@ccclass("Mian")
+@menu("cwg/Mian")
 export class Mian extends Component {
-    @property({ type: Node, tooltip: 'UI 挂载根节点（mian 场景下的 view 节点）' })
+    @property({ type: Node, tooltip: "UI 挂载根节点（mian 场景下的 view 节点）" })
     protected viewNode: Node | null = null;
 
     /** 由 SimpleUIManager 挂入 __TopMount__，永远盖过 Layer_0～Layer_10 内各面板 */
-    @property({ type: Node, tooltip: '全局置顶 UI（如金币条）；须在编辑器绑定场景中的节点' })
+    @property({
+        type: Node,
+        tooltip: "全局置顶 UI（如金币条）；须在编辑器绑定场景中的节点",
+    })
     protected topNode: Node | null = null;
 
     /** 场景内首屏遮罩（如 Canvas 下 loading 节点），核心与分包资源就绪后关闭 */
-    @property({ type: Node, tooltip: '首屏 Loading 节点，资源与常用 UI 预加载完成后自动 active=false' })
+    @property({
+        type: Node,
+        tooltip: "首屏 Loading 节点，资源与常用 UI 预加载完成后自动 active=false",
+    })
     protected loadingNode: Node | null = null;
+
+    @property({ type: Button })
+    protected btnSetting: Button | null = null;
+
+    @property({ type: Label, tooltip: "金币" })
+    protected labelGold: Label | null = null;
+
+    @property({ type: Label, tooltip: "体力" })
+    protected labelPower: Label | null = null;
 
     /**
      * 除 `resources`（已在 GameBootstrap / ResManager.ensureReady 中加载）外，
@@ -32,21 +57,21 @@ export class Mian extends Component {
      */
     private static readonly ENTRY_BUNDLE_NAMES: readonly string[] = [];
 
-    /** 与 LoadingView.tryAutoLogin 一致：加载阶段静默登录；非抖音/失败不阻塞进游戏 */
-    private static async autoLoginDuringLoad(): Promise<void> {
-        try {
-            await TTMinis.ensureInitialized().login();
-            console.log('[Mian] 加载阶段自动登录成功');
-        } catch (err) {
-            console.log('[Mian] 加载阶段自动登录跳过或失败', err);
-        }
+    protected onEnable(): void {
+        this.btnSetting?.node.on(Button.EventType.CLICK, this.onSettingClick, this);
+        EventMng.on(EventName.PLAYER_RESOURCE_CHANGED, this.initUI, this);
+    }
+
+    protected onDisable(): void {
+        this.btnSetting?.node.off(Button.EventType.CLICK, this.onSettingClick, this);
+        EventMng.off(EventName.PLAYER_RESOURCE_CHANGED, this.initUI, this);
     }
 
     protected async start(): Promise<void> {
         if (this.loadingNode?.isValid) {
             this.loadingNode.active = true;
         }
-        installScreenAdaptation('auto');
+        installScreenAdaptation("auto");
         HotUpdateService.instance.applyStoredSearchPaths();
         await GameBootstrap.ensureReady();
         await I18n.instance.init();
@@ -66,10 +91,40 @@ export class Mian extends Component {
             Mian.autoLoginDuringLoad(),
         ]);
 
+        this.initUI();
+
         if (this.loadingNode?.isValid) {
             this.loadingNode.active = false;
-            await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, { pushToStack: false });
+            await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, {
+                pushToStack: false,
+            });
         }
+    }
+
+    initUI(): void {
+        const playerData = GlobalPlayerData.instance;
+        if (this.labelGold?.isValid) {
+            this.labelGold.string = `${playerData.coins}`;
+        }
+        if (this.labelPower?.isValid) {
+            this.labelPower.string = `${playerData.stamina}`;
+        }
+    }
+
+    /** 与 LoadingView.tryAutoLogin 一致：加载阶段静默登录；非抖音/失败不阻塞进游戏 */
+    private static async autoLoginDuringLoad(): Promise<void> {
+        try {
+            await TTMinis.ensureInitialized().login();
+            console.log("[Mian] 加载阶段自动登录成功");
+        } catch (err) {
+            console.log("[Mian] 加载阶段自动登录跳过或失败", err);
+        }
+    }
+
+    private onSettingClick(): void {
+        void SimpleUIManager.instance.open(UIPanelId.SETTING, undefined, {
+            pushToStack: false,
+        });
     }
 
     protected onDestroy(): void {

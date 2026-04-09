@@ -37,6 +37,8 @@ export class TTMinis extends Component {
 	private rewardedLoadingPromise: Promise<void> | null = null;
 	private rewardedReady = false;
 	private rewardedShowing = false;
+	/** showRewarded 时发现未初始化则尝试补初始化，避免重复递归 */
+	private rewardedShowRetry = false;
 
 	onLoad() {
 		if (TTMinis.inst != null && TTMinis.inst !== this) {
@@ -45,11 +47,41 @@ export class TTMinis extends Component {
 		}
 		TTMinis.inst = this;
 		this.isInTT = typeof tt !== "undefined";
-		console.log("✅ TTMinis 初始化完成");
+		console.log("✅ TTMinis 初始化完成, isInTT=", this.isInTT);
 
-		// 使用配置文件中的广告ID
-		TTMinis.inst.initRewarded(TTConfig.rewardedAdId);
-		TTMinis.inst.initInterstitial(TTConfig.interstitialAdId);
+		// 延后一帧再创建广告：部分测试包/真机上 tt 与广告 API 在首帧 onLoad 时尚未完全就绪
+		this.scheduleOnce(() => {
+			if (!this.isValid || TTMinis.inst !== this) {
+				return;
+			}
+			this.initRewarded(TTConfig.rewardedAdId);
+			this.initInterstitial(TTConfig.interstitialAdId);
+		}, 0);
+	}
+
+	/** 将平台 load() 统一为 Promise（部分基础库返回值不一致） */
+	private static adOpToPromise(op: unknown): Promise<void> {
+		if (op != null && typeof (op as Promise<void>).then === "function") {
+			return op as Promise<void>;
+		}
+		return Promise.reject(new Error("[TTMinis] 广告 load/show 未返回 Promise，请升级抖音基础库"));
+	}
+
+	private safeRewardedOffListeners(): void {
+		const ad = this.rewardedVideoAd;
+		if (!ad) {
+			return;
+		}
+		try {
+			if (typeof ad.offClose === "function") {
+				ad.offClose();
+			}
+			if (typeof ad.offError === "function") {
+				ad.offError();
+			}
+		} catch (e) {
+			console.warn("[TTMinis] 移除激励广告监听时异常（可忽略）", e);
+		}
 	}
 
 	// ==============================================
@@ -70,13 +102,13 @@ export class TTMinis extends Component {
 				return resolve(this.loginCode);
 			}
 
-			tt.login({ 
+			tt.login({
 				success: (res) => {
 					this.loginCode = res.code;
 					this.loginExpireTime = Date.now() + this.LOGIN_VALID_DURATION;
 					resolve(res.code);
-				}, 
-				fail: reject 
+				},
+				fail: reject
 			});
 		});
 	}
@@ -121,10 +153,12 @@ export class TTMinis extends Component {
 
 		this.rewardedVideoAd.onError((err) => {
 			this.rewardedReady = false;
-			console.error("广告错误", err);
+			console.error("[TTMinis] 激励广告 onError", err);
 		});
 
-		this.loadRewardedAd().catch(() => {});
+		this.loadRewardedAd().catch((e) => {
+			console.error("[TTMinis] 激励广告首次 load 失败（请核对广告位 ID、是否开通激励、测试包是否绑定应用）", e);
+		});
 	}
 
 	/**
@@ -136,7 +170,22 @@ export class TTMinis extends Component {
 
 	showRewarded(onSuccess: () => void, onSkipped?: () => void) {
 		if (!this.rewardedVideoAd) {
+			if (this.isInTT && TTConfig.rewardedAdId && !this.rewardedShowRetry) {
+				this.rewardedShowRetry = true;
+				console.warn("[TTMinis] 激励广告实例为空，尝试补初始化后重试一次");
+				this.initRewarded(TTConfig.rewardedAdId);
+				this.scheduleOnce(() => {
+					this.rewardedShowRetry = false;
+					if (this.rewardedVideoAd) {
+						this.showRewarded(onSuccess, onSkipped);
+					} else {
+						this.toast("广告未初始化");
+					}
+				}, 0);
+				return;
+			}
 			this.toast("广告未初始化");
+			console.warn("[TTMinis] showRewarded: 无实例。isInTT=", this.isInTT, "adId=", TTConfig.rewardedAdId || "(空)");
 			return;
 		}
 		if (this.rewardedShowing) {
@@ -144,15 +193,13 @@ export class TTMinis extends Component {
 			return;
 		}
 
-		// 清空旧事件
-		this.rewardedVideoAd.offClose();
-		this.rewardedVideoAd.offError();
+		this.safeRewardedOffListeners();
 
 		// 关闭后自动重新加载（关键修复）
 		this.rewardedVideoAd.onClose((res) => {
 			this.rewardedShowing = false;
 			this.rewardedReady = false;
-			this.loadRewardedAd().catch(() => {});
+			this.loadRewardedAd().catch(() => { });
 			if (res?.isEnded) onSuccess?.();
 			else onSkipped?.();
 		});
@@ -164,17 +211,17 @@ export class TTMinis extends Component {
 			if (err?.errCode === 1004 || err?.errCode === 1005 || err?.errCode === 1008) {
 				this.recreateRewardedAd();
 			}
-			this.loadRewardedAd().catch(() => {});
+			this.loadRewardedAd().catch(() => { });
 		});
 
 		this.loadRewardedAd()
 			.then(() => {
 				this.rewardedShowing = true;
-				return this.rewardedVideoAd.show();
+				return TTMinis.adOpToPromise(this.rewardedVideoAd.show());
 			})
 			.catch((err) => {
 				this.rewardedShowing = false;
-				console.log("广告播放失败", err);
+				console.error("[TTMinis] 激励广告 load/show 失败", err);
 				this.toast("广告加载失败，请稍后重试");
 			});
 	}
@@ -189,17 +236,15 @@ export class TTMinis extends Component {
 		if (this.rewardedLoadingPromise) {
 			return this.rewardedLoadingPromise;
 		}
-		this.rewardedLoadingPromise = this.rewardedVideoAd
-			.load()
+		this.rewardedLoadingPromise = TTMinis.adOpToPromise(this.rewardedVideoAd.load())
 			.then(() => {
 				this.rewardedReady = true;
+				this.rewardedLoadingPromise = null;
 			})
 			.catch((err) => {
 				this.rewardedReady = false;
-				throw err;
-			})
-			.finally(() => {
 				this.rewardedLoadingPromise = null;
+				throw err;
 			});
 		return this.rewardedLoadingPromise;
 	}
@@ -261,8 +306,7 @@ export class TTMinis extends Component {
 
 		const ad = this.interstitialAd;
 		const tryShow = () =>
-			ad
-				.show()
+			TTMinis.adOpToPromise(ad.show())
 				.then(() => {
 					console.log("[TTMinis] 插屏广告显示成功");
 					onSuccess?.();
@@ -274,7 +318,9 @@ export class TTMinis extends Component {
 				});
 
 		if (typeof ad.load === "function") {
-			ad.load().then(tryShow).catch((err: unknown) => {
+			TTMinis.adOpToPromise(ad.load())
+				.then(() => tryShow())
+				.catch((err: unknown) => {
 				console.error("[TTMinis] 插屏广告加载失败:", err);
 				this.toast("广告加载失败");
 				onFail?.(err);
@@ -299,12 +345,12 @@ export class TTMinis extends Component {
 		return new Promise((resolve, reject) => {
 			if (!this.isInTT) return reject("非抖音环境");
 			if (!tt.shareAppMessage) return reject("不支持分享");
-			tt.shareAppMessage({ 
-				title: title || TTConfig.defaultShareTitle, 
-				imageUrl, 
-				query: query || TTConfig.defaultShareQuery, 
-				success: () => resolve(), 
-				fail: reject 
+			tt.shareAppMessage({
+				title: title || TTConfig.defaultShareTitle,
+				imageUrl,
+				query: query || TTConfig.defaultShareQuery,
+				success: () => resolve(),
+				fail: reject
 			});
 		});
 	}

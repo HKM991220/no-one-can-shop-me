@@ -3,6 +3,9 @@ import { _decorator, Button, Label, Node } from "cc";
 import { SimpleUIManager } from "../common/ui/SimpleUIManager";
 import { UIPanelId } from "../common/ui/UIPanelRegistry";
 import { TTMinis } from "../common/sdk/TTMinis";
+import { GlobalPlayerData } from "../common/GlobalPlayerData";
+import EventMng from "../common/EventMng";
+import { EventName } from "../common/Enum";
 
 const { ccclass, menu, property } = _decorator;
 
@@ -11,11 +14,6 @@ const { ccclass, menu, property } = _decorator;
 export default class SalaView extends SimpleUIBase {
 	@property(Button)
 	protected startButton: Button | null = null;
-
-	/** 快捷方式奖励领取成功事件（业务层可监听后发奖） */
-	public static readonly EVENT_REWARD_SHORTCUT = "reward:shortcut";
-	/** 个人主页侧边栏奖励领取成功事件（业务层可监听后发奖） */
-	public static readonly EVENT_REWARD_PROFILE_SIDEBAR = "reward:profileSidebar";
 
 	@property(Node)
 	btnRewardedAd: Node = null!;
@@ -28,6 +26,20 @@ export default class SalaView extends SimpleUIBase {
 
 	@property(Node)
 	btnPay: Node = null!;
+
+	@property(Node)
+	btnAddGold: Node = null!;
+
+	@property(Node)
+	btnSubGold: Node = null!;
+
+	@property(Node)
+	btnAddPower: Node = null!;
+
+	@property(Node)
+	btnSubPower: Node = null!;
+
+
 
 	@property({ tooltip: "付费示例：价格（分），正式环境请与后台商品一致" })
 	protected defaultPayAmountFen: number = 10;
@@ -79,6 +91,10 @@ export default class SalaView extends SimpleUIBase {
 		);
 		this.btnShare?.on(Button.EventType.CLICK, this.onShareClick, this);
 		this.btnPay?.on(Button.EventType.CLICK, this.onPayClick, this);
+		this.btnAddGold?.on(Button.EventType.CLICK, this.onAddGoldClick, this);
+		this.btnSubGold?.on(Button.EventType.CLICK, this.onSubGoldClick, this);
+		this.btnAddPower?.on(Button.EventType.CLICK, this.onAddPowerClick, this);
+		this.btnSubPower?.on(Button.EventType.CLICK, this.onSubPowerClick, this);
 	}
 
 	protected offButtonListeners(): void {
@@ -94,6 +110,44 @@ export default class SalaView extends SimpleUIBase {
 		);
 		this.btnShare?.off(Button.EventType.CLICK, this.onShareClick, this);
 		this.btnPay?.off(Button.EventType.CLICK, this.onPayClick, this);
+		this.btnAddGold?.off(Button.EventType.CLICK, this.onAddGoldClick, this);
+		this.btnSubGold?.off(Button.EventType.CLICK, this.onSubGoldClick, this);
+		this.btnAddPower?.off(Button.EventType.CLICK, this.onAddPowerClick, this);
+		this.btnSubPower?.off(Button.EventType.CLICK, this.onSubPowerClick, this);
+	}
+
+	private notifyResourceChanged(): void {
+		const playerData = GlobalPlayerData.instance;
+		EventMng.emit(EventName.PLAYER_RESOURCE_CHANGED, {
+			coins: playerData.coins,
+			stamina: playerData.stamina,
+		});
+	}
+
+	/** 增加金币（默认 +100） */
+	private onAddGoldClick(): void {
+		GlobalPlayerData.instance.addCoins(10);
+		this.notifyResourceChanged();
+	}
+
+	/** 减少金币（默认 -100，最低到 0） */
+	private onSubGoldClick(): void {
+		GlobalPlayerData.instance.addCoins(-10);
+		this.notifyResourceChanged();
+	}
+
+	/** 增加体力（默认 +10，不超过上限） */
+	private onAddPowerClick(): void {
+		const playerData = GlobalPlayerData.instance;
+		playerData.setStamina(playerData.stamina + 10);
+		this.notifyResourceChanged();
+	}
+
+	/** 减少体力（默认 -10，最低到 0） */
+	private onSubPowerClick(): void {
+		const playerData = GlobalPlayerData.instance;
+		playerData.setStamina(playerData.stamina - 10);
+		this.notifyResourceChanged();
 	}
 
 	// 激励视频
