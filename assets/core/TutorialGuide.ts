@@ -27,6 +27,9 @@ export default class TutorialGuide extends Component {
     @property(Node)
     protected fingerNode: Node | null = null;
 
+    @property(Node)
+    protected tipNode: Node | null = null;
+
     @property(Label)
     protected tipLabel: Label | null = null;
 
@@ -158,16 +161,9 @@ export default class TutorialGuide extends Component {
                 this.root = guideRoot;
             }
         }
-        if (!this.highlightNode) {
-            this.highlightNode = this.root.getChildByName("highlight");
-        }
-        if (!this.fingerNode) {
-            this.fingerNode = this.root.getChildByName("finger");
-        }
-        if (!this.tipLabel) {
-            const tipNode = this.root.getChildByName("tipLabel");
-            this.tipLabel = tipNode?.getComponent(Label) ?? null;
-        }
+
+
+
         if (!this.funlandView) {
             this.funlandView =
                 this.node.getComponent(VwFunland) ??
