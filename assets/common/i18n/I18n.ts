@@ -10,7 +10,7 @@ import {EventTarget, JsonAsset} from 'cc';
 import {GameBootstrap} from '../GameBootstrap';
 import {GlobalPlayerData} from '../GlobalPlayerData';
 
-const BUNDLE = 'subpackages';
+const BUNDLE = 'resources';
 const I18N_DIR = 'i18n';
 
 function getByPath(obj: unknown, path: string): unknown {

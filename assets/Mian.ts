@@ -2,7 +2,7 @@ import { _decorator, Component, Node } from 'cc';
 import { GameBootstrap } from './common/GameBootstrap';
 import { installScreenAdaptation, uninstallScreenAdaptation } from './common/ScreenAdapter';
 import { SimpleUIManager } from './common/ui/SimpleUIManager';
-import { preloadCommonPanels, registerAllUIPanels, UIPanelId } from './common/ui/UIPanelRegistry';
+import { registerAllUIPanels, UI_PANEL_PRELOAD_IDS, UIPanelId } from './common/ui/UIPanelRegistry';
 import { HotUpdateService } from './common/hotupdate/HotUpdateService';
 import { TTMinis } from './common/sdk/TTMinis';
 import { I18n } from './common/i18n/I18n';
@@ -22,7 +22,30 @@ export class Mian extends Component {
     @property({ type: Node, tooltip: '全局置顶 UI（如金币条）；须在编辑器绑定场景中的节点' })
     protected topNode: Node | null = null;
 
+    /** 场景内首屏遮罩（如 Canvas 下 loading 节点），核心与分包资源就绪后关闭 */
+    @property({ type: Node, tooltip: '首屏 Loading 节点，资源与常用 UI 预加载完成后自动 active=false' })
+    protected loadingNode: Node | null = null;
+
+    /**
+     * 除 `resources`（已在 GameBootstrap / ResManager.ensureReady 中加载）外，
+     * 首屏需 `loadBundle` 完成的包名，与 assets 里勾选为 Asset Bundle 的文件夹名一致。
+     */
+    private static readonly ENTRY_BUNDLE_NAMES: readonly string[] = [];
+
+    /** 与 LoadingView.tryAutoLogin 一致：加载阶段静默登录；非抖音/失败不阻塞进游戏 */
+    private static async autoLoginDuringLoad(): Promise<void> {
+        try {
+            await TTMinis.ensureInitialized().login();
+            console.log('[Mian] 加载阶段自动登录成功');
+        } catch (err) {
+            console.log('[Mian] 加载阶段自动登录跳过或失败', err);
+        }
+    }
+
     protected async start(): Promise<void> {
+        if (this.loadingNode?.isValid) {
+            this.loadingNode.active = true;
+        }
         installScreenAdaptation('auto');
         HotUpdateService.instance.applyStoredSearchPaths();
         await GameBootstrap.ensureReady();
@@ -35,12 +58,18 @@ export class Mian extends Component {
         SimpleUIManager.instance.init(root);
         SimpleUIManager.instance.mountPersistentTopNode(this.topNode);
         registerAllUIPanels();
-        // 与 Loading 并行拉取 Game / Setting / Sala 预制体，避免进游戏后首次点开设置要等资源
-        preloadCommonPanels();
 
-        // 预加载并打开Loading界面
-        await SimpleUIManager.instance.preload(UIPanelId.LOADING);
-        await SimpleUIManager.instance.open(UIPanelId.LOADING, undefined, { pushToStack: false });
+        const res = GameBootstrap.instance.res;
+        await Promise.all([
+            ...Mian.ENTRY_BUNDLE_NAMES.map((name) => res.loadBundle(name)),
+            ...UI_PANEL_PRELOAD_IDS.map((id) => SimpleUIManager.instance.preload(id)),
+            Mian.autoLoginDuringLoad(),
+        ]);
+
+        if (this.loadingNode?.isValid) {
+            this.loadingNode.active = false;
+            await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, { pushToStack: false });
+        }
     }
 
     protected onDestroy(): void {

@@ -12,21 +12,22 @@ export const UIPanelId = {
  * UI 预制体路径（相对 Bundle）；与 `UIPanelRegistry.UI_PANEL_CONFIGS` 保持同步时需手工对齐。
  */
 export enum UIPrefabPath {
-    LOADING_VIEW = 'prefab/LoadingView',
     GAME_VIEW = 'prefab/GameView',
     SETTING_VIEW = 'prefab/SettingView',
     SALA_VIEW = 'prefab/SalaView',
 }
+
+
+const BUNDLE_NAME = 'resources';
 
 /**
  * 全局 UI 面板注册表（预制体 id / bundle / path / layer）。
  * 新增界面时只改此文件，入口场景调用 registerAllUIPanels() 即可。
  */
 export const UI_PANEL_CONFIGS: UIConfig[] = [
-    { id: UIPanelId.LOADING, bundle: 'subpackages', path: UIPrefabPath.LOADING_VIEW, layer: 10 },
-    { id: UIPanelId.GAME, bundle: 'subpackages', path:  UIPrefabPath.GAME_VIEW },
-    { id: UIPanelId.SETTING, bundle: 'subpackages', path:  UIPrefabPath.SETTING_VIEW, layer: 5 },
-    { id: UIPanelId.SALA, bundle: 'subpackages', path:  UIPrefabPath.SALA_VIEW, layer: 5 },
+    { id: UIPanelId.GAME, bundle: BUNDLE_NAME, path:  UIPrefabPath.GAME_VIEW },
+    { id: UIPanelId.SETTING, bundle: BUNDLE_NAME, path:  UIPrefabPath.SETTING_VIEW, layer: 5 },
+    { id: UIPanelId.SALA, bundle: BUNDLE_NAME, path:  UIPrefabPath.SALA_VIEW, layer: 5 },
 ];
 
 /** 在 SimpleUIManager.init(parent) 之后调用 */

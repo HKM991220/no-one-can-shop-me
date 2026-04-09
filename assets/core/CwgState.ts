@@ -33,7 +33,7 @@ export default class CwgState {
     }
 
     public getData() {
-        return ResLoader.loadJson('subpackages', `level/level_${this.info.level + 1}`);
+        return ResLoader.loadJson('resources', `level/level_${this.info.level + 1}`);
     }
 
     public save() {

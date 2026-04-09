@@ -97,7 +97,7 @@ export default class SettingView extends SimpleUIBase {
         this.refreshLanguageUi();
     }
 
-    protected onUIClose(): void {
+    protected offButtonListeners(): void {
         this.unbindControls();
     }
 

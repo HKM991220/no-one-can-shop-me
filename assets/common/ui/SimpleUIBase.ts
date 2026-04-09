@@ -25,7 +25,7 @@ export class SimpleUIBase extends Component {
 	 * UI关闭回调（子类覆盖）
 	 * @param data 关闭时传入的数据
 	 */
-	protected onUIClose(data?: any): void {
+	protected offButtonListeners(data?: any): void {
 		// 子类可覆盖此方法处理关闭逻辑
 	}
 

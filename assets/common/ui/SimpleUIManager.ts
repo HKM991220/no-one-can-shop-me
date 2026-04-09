@@ -368,7 +368,7 @@ export class SimpleUIManager extends Component {
 	}
 
 	/**
-	 * 检查UI是否已打开
+ * 检查UI是否已打开
 	 */
 	public isOpen(id: string): boolean {
 		const instance = this.uiInstances.get(id);
