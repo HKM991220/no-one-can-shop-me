@@ -95,9 +95,16 @@ export class Mian extends Component {
 
         if (this.loadingNode?.isValid) {
             this.loadingNode.active = false;
-            await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, {
-                pushToStack: false,
-            });
+            if (GlobalPlayerData.instance.level === 0) {
+                await SimpleUIManager.instance.open(UIPanelId.STORY_LINE, undefined, {
+                    pushToStack: false,
+                });
+            } else {
+                await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, {
+                    pushToStack: false,
+                });
+            }
+
         }
     }
 

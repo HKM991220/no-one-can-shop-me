@@ -3,7 +3,7 @@
  * 音频开关/音量仍由 GameAudioSettings 持久化；此处提供委托方法便于统一入口。
  */
 import LocalStorage from './LocalStorage';
-import {GameAudioSettings} from './AudioSetting';
+import { GameAudioSettings } from './AudioSetting';
 
 export const GLOBAL_PLAYER_STORAGE_KEY = 'cwg_global_player_data_v1';
 
@@ -14,6 +14,7 @@ export interface GlobalPlayerDataSnapshotV1 {
     version: 1;
     /** BCP-47，如 zh-Hans、en */
     language: string;
+    level: number;
     coins: number;
     stamina: number;
     staminaMax: number;
@@ -26,6 +27,7 @@ export interface GlobalPlayerDataSnapshotV1 {
 const DEFAULT_SNAPSHOT: Omit<GlobalPlayerDataSnapshotV1, 'version'> = {
     language: 'zh-Hans',
     coins: 0,
+    level: 0,
     stamina: 100,
     staminaMax: 100,
     settings: {},
@@ -49,14 +51,15 @@ export class GlobalPlayerData {
     }
 
     private _language = DEFAULT_SNAPSHOT.language;
+    private _level = DEFAULT_SNAPSHOT.level;
     private _coins = DEFAULT_SNAPSHOT.coins;
     private _stamina = DEFAULT_SNAPSHOT.stamina;
     private _staminaMax = DEFAULT_SNAPSHOT.staminaMax;
     private _lastStaminaUtc: number | undefined;
-    private _settings: PlayerExtraSettings = {...DEFAULT_SNAPSHOT.settings};
+    private _settings: PlayerExtraSettings = { ...DEFAULT_SNAPSHOT.settings };
     private _loaded = false;
 
-    private constructor() {}
+    private constructor() { }
 
     /**
      * 从本地读取；应在 GameBootstrap.ensureReady() 之后调用一次（已在 GameBootstrap 内调用）。
@@ -96,17 +99,19 @@ export class GlobalPlayerData {
             staminaMax,
         );
         const coins = Math.max(0, typeof s.coins === 'number' && Number.isFinite(s.coins) ? Math.floor(s.coins) : DEFAULT_SNAPSHOT.coins);
+        const level = Math.max(0, typeof s.level === 'number' && Number.isFinite(s.level) ? Math.floor(s.level) : DEFAULT_SNAPSHOT.level);
         const language = typeof s.language === 'string' && s.language.length > 0 ? s.language : DEFAULT_SNAPSHOT.language;
         const settings =
             s.settings && typeof s.settings === 'object' && !Array.isArray(s.settings)
-                ? {...s.settings}
-                : {...DEFAULT_SNAPSHOT.settings};
+                ? { ...s.settings }
+                : { ...DEFAULT_SNAPSHOT.settings };
         const lastStaminaUtc =
             typeof s.lastStaminaUtc === 'number' && Number.isFinite(s.lastStaminaUtc) ? s.lastStaminaUtc : undefined;
 
         return {
             version: 1,
             language,
+            level,
             coins,
             stamina,
             staminaMax,
@@ -117,22 +122,24 @@ export class GlobalPlayerData {
 
     private applySnapshot(s: GlobalPlayerDataSnapshotV1): void {
         this._language = s.language;
+        this._level = s.level;
         this._coins = s.coins;
         this._stamina = s.stamina;
         this._staminaMax = s.staminaMax;
         this._lastStaminaUtc = s.lastStaminaUtc;
-        this._settings = {...s.settings};
+        this._settings = { ...s.settings };
     }
 
     private buildSnapshot(): GlobalPlayerDataSnapshotV1 {
         return {
             version: 1,
             language: this._language,
+            level: this._level,
             coins: this._coins,
             stamina: this._stamina,
             staminaMax: this._staminaMax,
             lastStaminaUtc: this._lastStaminaUtc,
-            settings: {...this._settings},
+            settings: { ...this._settings },
         };
     }
 
@@ -147,6 +154,16 @@ export class GlobalPlayerData {
             return;
         }
         this._language = v;
+        this.save();
+    }
+
+    // --- 关卡 ---
+    public get level(): number {
+        return this._level;
+    }
+
+    public setLevel(value: number): void {
+        this._level = Math.max(0, Math.floor(Number.isFinite(value) ? value : 0));
         this.save();
     }
 

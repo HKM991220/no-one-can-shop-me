@@ -6,6 +6,7 @@ export const UIPanelId = {
     GAME: 'Game',
     SETTING: 'Setting',
     SALA: 'Sala',
+    STORY_LINE: 'StoryLine',
 } as const;
 
 /**
@@ -15,6 +16,7 @@ export enum UIPrefabPath {
     GAME_VIEW = 'prefab/GameView',
     SETTING_VIEW = 'prefab/SettingView',
     SALA_VIEW = 'prefab/SalaView',
+    STORY_LINE_VIEW = 'prefab/StoryLineView',
 }
 
 
@@ -25,9 +27,10 @@ const BUNDLE_NAME = 'resources';
  * 新增界面时只改此文件，入口场景调用 registerAllUIPanels() 即可。
  */
 export const UI_PANEL_CONFIGS: UIConfig[] = [
-    { id: UIPanelId.GAME, bundle: BUNDLE_NAME, path:  UIPrefabPath.GAME_VIEW },
-    { id: UIPanelId.SETTING, bundle: BUNDLE_NAME, path:  UIPrefabPath.SETTING_VIEW, layer: 5 },
-    { id: UIPanelId.SALA, bundle: BUNDLE_NAME, path:  UIPrefabPath.SALA_VIEW, layer: 5 },
+    { id: UIPanelId.GAME, bundle: BUNDLE_NAME, path: UIPrefabPath.GAME_VIEW },
+    { id: UIPanelId.SETTING, bundle: BUNDLE_NAME, path: UIPrefabPath.SETTING_VIEW, layer: 5 },
+    { id: UIPanelId.SALA, bundle: BUNDLE_NAME, path: UIPrefabPath.SALA_VIEW, layer: 5 },
+    { id: UIPanelId.STORY_LINE, bundle: BUNDLE_NAME, path: UIPrefabPath.STORY_LINE_VIEW, layer: 5 },
 ];
 
 /** 在 SimpleUIManager.init(parent) 之后调用 */
