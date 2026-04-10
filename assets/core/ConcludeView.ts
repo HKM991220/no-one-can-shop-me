@@ -1,4 +1,4 @@
-import { _decorator, Node, resources, Sprite, SpriteFrame, UITransform } from "cc";
+import { _decorator, Node } from "cc";
 import { SimpleUIBase } from "../common/ui/SimpleUIBase";
 import { SimpleUIManager } from "../common/ui/SimpleUIManager";
 import { UIPanelId } from "../common/ui/UIPanelRegistry";
@@ -8,7 +8,7 @@ import { EventName } from "../common/Enum";
 import { VwPlay } from "./VwPlay";
 import { GlobalPlayerData } from "../common/GlobalPlayerData";
 
-const { ccclass, menu } = _decorator;
+const { ccclass, menu, property } = _decorator;
 
 /** SimpleUIManager.open(Conclude, data) 传入 */
 export type ConcludeViewOpenData = {
@@ -19,12 +19,29 @@ export type ConcludeViewOpenData = {
     coinReward?: number;
 };
 
-const FAIL_TITLE_RES = "images/conclude/challenge failed";
-
 @ccclass("ConcludeView")
 @menu("cwg/ConcludeView")
 export default class ConcludeView extends SimpleUIBase {
-    private failTitleNode: Node | null = null;
+    /** 结算成功时显示的彩带节点（Inspector 手动挂载） */
+    @property(Node)
+    public caidaiNode: Node | null = null;
+
+    /** 结算成功标题节点（通常是 "level complete"，Inspector 手动挂载） */
+    @property(Node)
+    public winNode: Node | null = null;
+
+    /** 结算失败标题节点（通常是 "challenge failed"，Inspector 手动挂载） */
+    @property(Node)
+    public failedNode: Node | null = null;
+
+    /** 成功结算时显示的「下一关」按钮节点（Inspector 手动挂载） */
+    @property(Node)
+    public NextNode: Node | null = null;
+
+    /** 失败结算时显示的「重试」按钮节点（Inspector 手动挂载） */
+    @property(Node)
+    public retryNode: Node | null = null;
+
     private outcomeSuccess = true;
     private skipAdvanceOnNext = false;
 
@@ -32,7 +49,7 @@ export default class ConcludeView extends SimpleUIBase {
         super.onUIOpen(data);
         this.outcomeSuccess = data?.success !== false;
         this.skipAdvanceOnNext = data?.skipAdvanceOnNext === true;
-        void this.applyOutcome(this.outcomeSuccess);
+        this.applyOutcome(this.outcomeSuccess);
         if (this.outcomeSuccess) {
             const raw = data?.coinReward;
             const coin =
@@ -47,60 +64,38 @@ export default class ConcludeView extends SimpleUIBase {
         }
     }
 
-    private async applyOutcome(success: boolean): Promise<void> {
-        const caidai = this.node.getChildByName("caidai");
+    private applyOutcome(success: boolean): void {
+        const caidai = this.caidaiNode;
         if (caidai?.isValid) {
             caidai.active = success;
         }
 
-        const winTitle = this.node.getChildByName("level complete");
+        const winTitle = this.winNode;
         if (winTitle?.isValid) {
             winTitle.active = success;
         }
 
+        const nextNode = this.NextNode;
+        if (nextNode?.isValid) {
+            nextNode.active = success;
+        }
+
+        const retryNode = this.retryNode;
+        if (retryNode?.isValid) {
+            retryNode.active = !success;
+        }
+
         if (success) {
-            const fail = this.node.getChildByName("challenge failed") ?? this.failTitleNode;
+            const fail = this.failedNode;
             if (fail?.isValid) {
                 fail.active = false;
             }
             return;
         }
 
-        await this.showFailTitle();
-    }
-
-    private async showFailTitle(): Promise<void> {
-        let node = this.node.getChildByName("challenge failed") ?? this.failTitleNode;
-        if (node?.isValid) {
-            node.active = true;
-            return;
-        }
-
-        try {
-            const sf = await new Promise<SpriteFrame>((resolve, reject) => {
-                resources.load(FAIL_TITLE_RES, SpriteFrame, (err, asset) => {
-                    if (err || !asset) {
-                        reject(err ?? new Error("empty SpriteFrame"));
-                    } else {
-                        resolve(asset);
-                    }
-                });
-            });
-            node = new Node("challenge failed");
-            const ut = node.addComponent(UITransform);
-            ut.setContentSize(sf.width, sf.height);
-            const sp = node.addComponent(Sprite);
-            sp.spriteFrame = sf;
-            node.setParent(this.node);
-            const win = this.node.getChildByName("level complete");
-            if (win?.isValid) {
-                node.setPosition(win.position);
-            } else {
-                node.setPosition(0, -219.706, 0);
-            }
-            this.failTitleNode = node;
-        } catch (e) {
-            console.warn("[ConcludeView] 加载失败标题图失败", e);
+        const fail = this.failedNode;
+        if (fail?.isValid) {
+            fail.active = true;
         }
     }
 

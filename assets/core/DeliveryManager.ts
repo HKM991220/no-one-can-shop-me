@@ -24,12 +24,6 @@ export default class DeliveryManager extends Component {
     @property({ type: [Node], tooltip: "4 个外卖员节点（可选；未配时自动从 Slot 下找 rider）" })
     protected riderNodes: Node[] = [];
 
-    @property({ type: [Node], tooltip: "4 个锁遮罩（可选；未配时自动从 Slot 下找 ad）" })
-    protected lockMasks: Node[] = [];
-
-    @property({ type: [Button], tooltip: "解锁按钮（通常只填 3/4 号位），可为空" })
-    protected unlockButtons: Button[] = [];
-
     @property({ type: Label, tooltip: "待派送数量（可选）" })
     protected pendingLabel: Label | null = null;
 
@@ -54,24 +48,10 @@ export default class DeliveryManager extends Component {
     private autoBoundUnlockNodes: Node[] = [];
 
     protected onEnable(): void {
-        for (let i = 0; i < this.unlockButtons.length; i++) {
-            const btn = this.unlockButtons[i];
-            if (!btn?.node?.isValid) {
-                continue;
-            }
-            btn.node.on(Button.EventType.CLICK, this.onUnlockButtonClick, this);
-        }
         this.bindAutoUnlockButtons();
     }
 
     protected onDisable(): void {
-        for (let i = 0; i < this.unlockButtons.length; i++) {
-            const btn = this.unlockButtons[i];
-            if (!btn?.node?.isValid) {
-                continue;
-            }
-            btn.node.off(Button.EventType.CLICK, this.onUnlockButtonClick, this);
-        }
         for (const btn of this.autoBoundUnlockButtons) {
             if (!btn?.node?.isValid) {
                 continue;
@@ -102,7 +82,6 @@ export default class DeliveryManager extends Component {
         const slotCount = Math.max(
             this.slotNodes.length,
             this.riderNodes.length,
-            this.lockMasks.length,
             4,
         );
         this.riderColors = new Array(slotCount).fill(null);
@@ -158,12 +137,6 @@ export default class DeliveryManager extends Component {
             return false;
         }
         let slotIdx = this.findMatchedRiderSlot(color);
-        if (slotIdx < 0) {
-            // 兜底：若当前没有同色骑手，先补一个，避免最后一瓶卡死
-            this.ensureRiderForColor(color);
-            this.refreshAllSlotsView();
-            slotIdx = this.findMatchedRiderSlot(color);
-        }
         if (slotIdx < 0) {
             return false;
         }
@@ -310,38 +283,6 @@ export default class DeliveryManager extends Component {
             }
         }
         return null;
-    }
-
-    private ensureRiderForColor(color: WaterColor): void {
-        if (!this.isDeliverableColor(color)) {
-            return;
-        }
-        if ((this.pendingPerColor[color] ?? 0) <= 0) {
-            return;
-        }
-        if (this.findMatchedRiderSlot(color) >= 0) {
-            return;
-        }
-
-        // 优先复用一个已解锁且当前为空的槽位
-        let targetIdx = -1;
-        for (let i = 0; i < this.unlockedSlots.length; i++) {
-            if (!this.unlockedSlots[i]) {
-                continue;
-            }
-            if (this.riderColors[i] === null) {
-                targetIdx = i;
-                break;
-            }
-        }
-        // 没有空位则覆盖第一个已解锁槽位，确保至少有一个可送骑手
-        if (targetIdx < 0) {
-            targetIdx = this.unlockedSlots.findIndex((u) => u === true);
-        }
-        if (targetIdx < 0) {
-            return;
-        }
-        this.riderColors[targetIdx] = color;
     }
 
     private findMatchedRiderSlot(color: WaterColor): number {
@@ -719,14 +660,6 @@ export default class DeliveryManager extends Component {
                 return adNode;
             }
         }
-        if (this.isFreeSlot(slotIndex)) {
-            return this.lockMasks[slotIndex] ?? null;
-        }
-        const paidIdx = this.getPaidSlotOrder(slotIndex);
-        const direct = this.lockMasks[paidIdx] ?? this.lockMasks[slotIndex] ?? null;
-        if (direct?.isValid) {
-            return direct;
-        }
         return null;
     }
 
@@ -839,10 +772,6 @@ export default class DeliveryManager extends Component {
             if (!btn?.node?.isValid) {
                 continue;
             }
-            // 已在手动配置里绑定过的按钮不重复绑定
-            if (this.unlockButtons.indexOf(btn) >= 0) {
-                continue;
-            }
             if (btn?.node?.isValid) {
                 btn.node.on(Button.EventType.CLICK, this.onUnlockButtonClick, this);
                 this.autoBoundUnlockButtons.push(btn);
@@ -876,12 +805,6 @@ export default class DeliveryManager extends Component {
                 `${name}(unlocked=${this.unlockedSlots[i] === true},color=${this.riderColors[i] ?? "null"})`,
             );
         }
-        console.log(
-            "[DeliveryManager] reset",
-            `pool=${this.levelColorPool.join(",") || "empty"}`,
-            `pending=${JSON.stringify(this.pendingPerColor)}`,
-            slots.join(" | "),
-        );
     }
 
     private isFreeSlot(index: number): boolean {
@@ -897,17 +820,5 @@ export default class DeliveryManager extends Component {
         return index < DeliveryManager.FREE_SLOT_COUNT;
     }
 
-    private getPaidSlotOrder(index: number): number {
-        const slot = this.slotNodes[index];
-        const name = slot?.name ?? "";
-        const match = name.match(/(\d+)/);
-        if (match) {
-            const no = Number(match[1]);
-            if (Number.isFinite(no) && no > DeliveryManager.FREE_SLOT_COUNT) {
-                return no - DeliveryManager.FREE_SLOT_COUNT - 1;
-            }
-        }
-        return Math.max(0, index - DeliveryManager.FREE_SLOT_COUNT);
-    }
 }
 
