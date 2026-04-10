@@ -15,13 +15,12 @@ export const enum WaterColor {
     Green,
     Blue,
     Purple,
-    // Cya,
-    // Silver, // 银色
-    // Gold, // 金色
-    // Gray, // 灰色
-    // Pink, // 粉色
-    // Black,
-    // Count
+    /** 关卡数据中的 7（如 level_3） */
+    Cyan,
+    /** 关卡数据中的 8 */
+    Pink,
+    /** 隐藏未揭示水块 */
+    Black,
 }
 
 interface ColorSet {
@@ -37,11 +36,16 @@ export const WaterColors: Record<WaterColor, ColorSet> = {
     [WaterColor.Green]: { base: '#00EE00', surface: '#00FF00' },
     [WaterColor.Blue]: { base: '#0085FF', surface: '#359EFF' },
     [WaterColor.Purple]: { base: '#800080', surface: '#B900B9' },
-    // [WaterColor.Cya]: {base: '#00E7E7', surface: '#00FFFF'},
-    // [WaterColor.Silver]: {base: '#C0C0C0', surface: '#E2E2E2'},
-    // [WaterColor.Gold]: {base: '#FFD700', surface: '#DFBC00'},
-    // [WaterColor.Gray]: {base: '#808080', surface: '#AAAAAA'},
-    // [WaterColor.Pink]: {base: '#FF7E94', surface: '#FFC0CB'},
-    // [WaterColor.Black]: {base: '#000000FF', surface: '#000000FF'},
-    // [WaterColor.Count]: {base: '#FFFFFFFF', surface: '#FFFFFFFF'},
+    [WaterColor.Cyan]: { base: '#00E7E7', surface: '#00FFFF' },
+    [WaterColor.Pink]: { base: '#FF7E94', surface: '#FFC0CB' },
+    [WaterColor.Black]: { base: '#000000FF', surface: '#000000FF' },
 };
+
+/** 关卡 JSON 等处的原始数字可能超出枚举；取不到配色时用于避免崩溃 */
+export function getWaterColorSet(id: number): ColorSet {
+    const set = (WaterColors as Record<number, ColorSet | undefined>)[id];
+    if (set) {
+        return set;
+    }
+    return WaterColors[WaterColor.Purple];
+}

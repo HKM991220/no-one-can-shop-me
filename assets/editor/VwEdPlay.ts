@@ -108,7 +108,7 @@ export class VwEdPlay extends VwPlay {
         })
 
         // 保存关卡数据到文件
-        this.ui.saveLevelData(glassInfos);
+        this.ui.saveLevelData(glassInfos, this.funland);
     }
 
     protected openGame() {

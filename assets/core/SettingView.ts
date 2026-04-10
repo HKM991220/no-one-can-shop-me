@@ -7,8 +7,6 @@ import { I18n } from '../common/i18n/I18n';
 
 const { ccclass, menu, property } = _decorator;
 
-
-
 /**
  * 设置页：音乐/音效开关；语言通过国旗 Toggle 切换（与 I18n + GlobalPlayerData 同步）。
  */

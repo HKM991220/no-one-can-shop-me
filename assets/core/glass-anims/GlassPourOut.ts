@@ -8,7 +8,7 @@
  */
 import { _decorator, Animation, AnimationClip, Color, math, Node, Sprite, tween, UIOpacity, v3, Vec3 } from 'cc';
 import Glass from "../Glass";
-import { WaterColor, WaterColors } from "../CwgConstant";
+import { WaterColor, getWaterColorSet } from "../CwgConstant";
 import Toolkit from '../../common/Toolkit';
 import { GlassInfo } from '../FunlandInfo';
 
@@ -151,7 +151,7 @@ export default class GlassPourOut extends Glass {
             const colorIdx = this.waters[layerIdx];
             this._eventCallbacks.startPour?.(layerIdx, colorIdx);
 
-            const color = Color.WHITE.fromHEX(WaterColors[colorIdx].base);
+            const color = Color.WHITE.fromHEX(getWaterColorSet(colorIdx).base);
 
         }
     }

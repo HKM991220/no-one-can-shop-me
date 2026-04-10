@@ -102,7 +102,7 @@
     "_prefab": null,
     "_lpos": {
       "__type__": "cc.Vec3",
-      "x": 375,
+      "x": 360,
       "y": 640,
       "z": 0
     },
@@ -3117,9 +3117,6 @@
     },
     "waterHeight": 40,
     "pickupHeight": 32,
-    "shadowNode": {
-      "__id__": 8
-    },
     "waterSurface": {
       "__id__": 81
     },
@@ -5741,9 +5738,6 @@
     },
     "waterHeight": 40,
     "pickupHeight": 32,
-    "shadowNode": {
-      "__id__": 85
-    },
     "waterSurface": null,
     "anim": {
       "__id__": 152
@@ -5751,7 +5745,6 @@
     "frontNode": {
       "__id__": 139
     },
-    "flowingSprites": [],
     "_id": "50vFXDscNLWI/2KyGcMzxG"
   },
   {
@@ -8583,9 +8576,6 @@
     },
     "waterHeight": 40,
     "pickupHeight": 32,
-    "shadowNode": {
-      "__id__": 156
-    },
     "waterSurface": {
       "__id__": 230
     },
@@ -8822,7 +8812,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 750,
+      "width": 720,
       "height": 1280
     },
     "_anchorPoint": {
@@ -9197,7 +9187,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 750,
+      "width": 720,
       "height": 1280
     },
     "_anchorPoint": {
@@ -37473,7 +37463,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 750,
+      "width": 720,
       "height": 1280
     },
     "_anchorPoint": {
@@ -37538,7 +37528,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 750,
+      "width": 720,
       "height": 1280
     },
     "_anchorPoint": {
@@ -37561,8 +37551,10 @@
     "levelLabel": {
       "__id__": 870
     },
-    "settingViewRoot": null,
-    "settingAttachParent": null,
+    "bottomNode": null,
+    "tutorialGuide": null,
+    "timeLabel": null,
+    "timePanel": null,
     "levelDataEditBox": {
       "__id__": 859
     },
@@ -43172,6 +43164,7 @@
     "ui": {
       "__id__": 958
     },
+    "blockerNode": null,
     "vwFunland": {
       "__id__": 342
     },
@@ -43260,8 +43253,10 @@
     },
     "_enabled": true,
     "__prefab": null,
-    "settingViewRoot": null,
-    "settingAttachParent": null,
+    "bottomNode": null,
+    "tutorialGuide": null,
+    "timeLabel": null,
+    "timePanel": null,
     "colCnt": {
       "__id__": 912
     },
@@ -43285,7 +43280,7 @@
     "__prefab": null,
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 750,
+      "width": 720,
       "height": 1280
     },
     "_anchorPoint": {

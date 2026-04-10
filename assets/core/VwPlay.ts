@@ -12,6 +12,8 @@ import { VwUi } from "./VwUi";
 import CwgState from "./CwgState";
 import FunlandInfo from './FunlandInfo';
 import { GlobalPlayerData } from '../common/GlobalPlayerData';
+import EventMng from '../common/EventMng';
+import { EventName } from '../common/Enum';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -30,6 +32,21 @@ export class VwPlay extends Component {
 
     public funland: FunlandInfo;
     public gameState: CwgState;
+
+    protected onEnable(): void {
+        EventMng.on(EventName.GAME_CONCLUDE_NEXT, this.onConcludeNext, this);
+    }
+
+    protected onDisable(): void {
+        EventMng.off(EventName.GAME_CONCLUDE_NEXT, this.onConcludeNext, this);
+    }
+
+    private onConcludeNext(payload?: { advance?: boolean }): void {
+        if (payload?.advance) {
+            this.funland.nextLevel();
+        }
+        void this.restartLevel();
+    }
 
     start() {
         this.gameState = new CwgState();

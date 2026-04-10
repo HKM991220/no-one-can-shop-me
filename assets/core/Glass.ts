@@ -7,7 +7,7 @@
  * @LastEditTime: 2025-07-22
  */
 import { _decorator, Color, Component, Node, Sprite, tween, UIOpacity, UITransform } from 'cc';
-import { WaterColor, WaterColors } from './CwgConstant';
+import { WaterColor, getWaterColorSet } from './CwgConstant';
 import WaterSurface from './glass-anims/WaterSurface';
 import { GlassInfo } from './FunlandInfo';
 
@@ -145,8 +145,9 @@ export default class Glass extends Component {
         const waterSprite = waterNode.getComponent(Sprite);
         const surfaceSprite = waterNode.children[0].getComponent(Sprite);
 
-        const baseColor = new Color(WaterColors[waterColor].base);
-        const surfaceColor = new Color(WaterColors[waterColor].surface);
+        const palette = getWaterColorSet(waterColor);
+        const baseColor = new Color(palette.base);
+        const surfaceColor = new Color(palette.surface);
         if (black2color) {
             tween(waterSprite).to(0.3, { color: baseColor }).start();
             tween(surfaceSprite).to(0.3, { color: surfaceColor }).start();

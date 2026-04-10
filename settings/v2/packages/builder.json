@@ -37,6 +37,9 @@
             "overwriteSettings": {
               "bytedance-mini-game": {
                 "isRemote": true
+              },
+              "wechatgame": {
+                "isRemote": true
               }
             }
           }

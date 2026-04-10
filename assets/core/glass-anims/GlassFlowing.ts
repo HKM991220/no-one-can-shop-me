@@ -12,7 +12,7 @@ import {_decorator, Color, Node, Sprite, tween, UITransform} from 'cc';
 import Toolkit from '../../common/Toolkit';
 import SoundComp from '../SoundComp';
 import Glass from "../Glass";
-import {WaterColor, WaterColors} from "../CwgConstant";
+import { WaterColor, getWaterColorSet } from "../CwgConstant";
 
 const {ccclass, menu, property} = _decorator;
 
@@ -62,10 +62,11 @@ export default class GlassFlowing extends Glass {
      */
     public play(color: WaterColor) {
 
+        const palette = getWaterColorSet(color);
         const flowingSprite = this.flowingNode.getComponent(Sprite);
-        flowingSprite.color = Color.WHITE.fromHEX(WaterColors[color].base);
+        flowingSprite.color = Color.WHITE.fromHEX(palette.base);
         const flowingShadowSprite = this.flowingShadowNode.getComponent(Sprite);
-        flowingShadowSprite.color = Color.WHITE.fromHEX(WaterColors[color].surface);
+        flowingShadowSprite.color = Color.WHITE.fromHEX(palette.surface);
 
         const startIdx = this.waters.length;
 

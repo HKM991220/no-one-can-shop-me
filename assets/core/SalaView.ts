@@ -39,8 +39,6 @@ export default class SalaView extends SimpleUIBase {
 	@property(Node)
 	btnSubPower: Node = null!;
 
-
-
 	@property({ tooltip: "付费示例：价格（分），正式环境请与后台商品一致" })
 	protected defaultPayAmountFen: number = 10;
 

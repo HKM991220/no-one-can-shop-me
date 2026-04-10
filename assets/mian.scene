@@ -573,8 +573,8 @@
     "_hoverSprite": null,
     "_pressedSprite": null,
     "_disabledSprite": null,
-    "_duration": 0.9,
-    "_zoomScale": 1,
+    "_duration": 0.1,
+    "_zoomScale": 0.9,
     "_target": null,
     "_id": "17gnVNNXRM9KDX2URyX2i/"
   },

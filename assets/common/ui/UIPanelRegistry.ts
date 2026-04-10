@@ -7,6 +7,7 @@ export const UIPanelId = {
     SETTING: 'Setting',
     SALA: 'Sala',
     STORY_LINE: 'StoryLine',
+    CONCLUDE: 'Conclude',
 } as const;
 
 /**
@@ -17,6 +18,7 @@ export enum UIPrefabPath {
     SETTING_VIEW = 'prefab/SettingView',
     SALA_VIEW = 'prefab/SalaView',
     STORY_LINE_VIEW = 'prefab/StoryLineView',
+    CONCLUDE_VIEW = 'prefab/ConcludeView',
 }
 
 
@@ -31,6 +33,7 @@ export const UI_PANEL_CONFIGS: UIConfig[] = [
     { id: UIPanelId.SETTING, bundle: BUNDLE_NAME, path: UIPrefabPath.SETTING_VIEW, layer: 5 },
     { id: UIPanelId.SALA, bundle: BUNDLE_NAME, path: UIPrefabPath.SALA_VIEW, layer: 5 },
     { id: UIPanelId.STORY_LINE, bundle: BUNDLE_NAME, path: UIPrefabPath.STORY_LINE_VIEW, layer: 5 },
+    { id: UIPanelId.CONCLUDE, bundle: BUNDLE_NAME, path: UIPrefabPath.CONCLUDE_VIEW, layer: 5 },
 ];
 
 /** 在 SimpleUIManager.init(parent) 之后调用 */
@@ -46,6 +49,8 @@ export const UI_PANEL_PRELOAD_IDS: readonly string[] = [
     UIPanelId.GAME,
     UIPanelId.SETTING,
     UIPanelId.SALA,
+    UIPanelId.CONCLUDE,
+    UIPanelId.STORY_LINE,
 ];
 
 export function preloadCommonPanels(): void {

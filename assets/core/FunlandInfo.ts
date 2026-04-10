@@ -17,6 +17,10 @@ export type GlassInfo = {
 
 export type LevelStruct = {
     level: GlassInfo[]
+    /**
+     * 通关限时（秒）。缺省或 ≤0 表示不限时（兼容旧关卡）。
+     */
+    timeLimitSec?: number
 }
 
 export default class FunlandInfo {
@@ -24,6 +28,9 @@ export default class FunlandInfo {
     public static debug: boolean = false;
 
     public glasses: GlassInfo[];
+
+    /** 当前关卡限时（秒），0 表示不限时 */
+    public timeLimitSec = 0;
 
     public state: CwgState;
 
@@ -63,6 +70,8 @@ export default class FunlandInfo {
     }
 
     public resetLvData(save: LevelStruct) {
+        const t = save.timeLimitSec;
+        this.timeLimitSec = typeof t === 'number' && t > 0 ? Math.floor(t) : 0;
         this.glasses = save.level;
         // 重新排序，根据position.y
         this.glasses.sort((a: GlassInfo, b: GlassInfo) => {

@@ -48,9 +48,16 @@ export class VwUi extends Component {
     @property(Node)
     protected bottomNode: Node | null = null;
 
-
     @property(TutorialGuide)
     protected tutorialGuide: TutorialGuide | null = null;
+
+    @property({ type: Label, tooltip: '限时关卡剩余时间，未绑定则仅逻辑倒计时无显示' })
+    protected timeLabel: Label | null = null;
+
+    @property({ type: Node, tooltip: '倒计时区域根节点，限时>0 时显示' })
+    protected timePanel: Node | null = null;
+
+    private timeRemainingSec = 0;
 
     protected onEnable(): void {
         if (this.settingButton?.isValid) {
@@ -67,6 +74,7 @@ export class VwUi extends Component {
     private colorBottleTarget: Record<number, number> = {};
 
     public reset(info: CwgStateInfo) {
+        this.stopLevelTimer();
         if (this.bottomNode?.isValid) {
             this.bottomNode.active = info.level !== 0;
         }
@@ -89,10 +97,73 @@ export class VwUi extends Component {
         if (GlobalPlayerData.instance.level === 0) {
             this.tutorialGuide?.beginIfNeeded();
         }
+        this.setupLevelTimeLimit();
     }
 
     protected onDestroy() {
+        this.stopLevelTimer();
         EventMng.offTarget(this);
+    }
+
+    private setupLevelTimeLimit(): void {
+        const limit = Math.max(0, Math.floor(this.funlandView?.funland?.timeLimitSec ?? 0));
+        const active = limit > 0;
+        if (this.timePanel?.isValid) {
+            this.timePanel.active = active;
+        }
+        if (!active) {
+            if (this.timeLabel?.isValid) {
+                this.timeLabel.string = '';
+            }
+            return;
+        }
+        this.timeRemainingSec = limit;
+        this.refreshTimeLabel();
+        this.schedule(this.onLevelTimeTick, 1);
+    }
+
+    private stopLevelTimer(): void {
+        this.unschedule(this.onLevelTimeTick);
+    }
+
+    private onLevelTimeTick(): void {
+        if (!this.funlandView?.isValid || this.funlandView.finished) {
+            this.stopLevelTimer();
+            return;
+        }
+        this.timeRemainingSec -= 1;
+        this.refreshTimeLabel();
+        if (this.timeRemainingSec <= 0) {
+            this.stopLevelTimer();
+            this.triggerLevelFail();
+        }
+    }
+
+    private refreshTimeLabel(): void {
+        if (!this.timeLabel?.isValid) {
+            return;
+        }
+        const s = Math.max(0, this.timeRemainingSec);
+        const m = Math.floor(s / 60);
+        const r = s % 60;
+        const rs = r < 10 ? `0${r}` : `${r}`;
+        this.timeLabel.string = `${m}:${rs}`;
+    }
+
+    private triggerLevelFail(): void {
+        if (!this.funlandView?.isValid || this.funlandView.finished) {
+            return;
+        }
+        this.funlandView.finished = true;
+        console.log('[LevelFail] 时间到，未完成');
+        EventMng.emit(EventName.LEVEL_FAILED);
+        void SimpleUIManager.instance
+            .open(UIPanelId.CONCLUDE, { success: false }, { pushToStack: false })
+            .then((ok) => {
+                if (!ok) {
+                    console.warn('[VwUi] 打开结算失败：Conclude 未注册或 SimpleUIManager 未就绪');
+                }
+            });
     }
 
     protected handleCompletePour() {
@@ -148,9 +219,22 @@ export class VwUi extends Component {
         if (!passed) {
             return;
         }
+        this.stopLevelTimer();
         this.funlandView.finished = true;
         console.log('[LevelPass] 通关！可进入下一关');
+        const levelBeforePass = GlobalPlayerData.instance.level;
         EventMng.emit('levelPassed');
+        GlobalPlayerData.instance.load();
+        /** 教程首通在 levelPassed 里已从 0→1，结算「下一关」不应再 +1 */
+        const skipAdvanceOnNext =
+            levelBeforePass === 0 && GlobalPlayerData.instance.level > levelBeforePass;
+        void SimpleUIManager.instance
+            .open(UIPanelId.CONCLUDE, { success: true, skipAdvanceOnNext }, { pushToStack: false })
+            .then((ok) => {
+                if (!ok) {
+                    console.warn('[VwUi] 打开结算失败：Conclude 未注册或 SimpleUIManager 未就绪');
+                }
+            });
     }
 
     protected handleProp(_, propName: string) {
