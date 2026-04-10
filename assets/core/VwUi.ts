@@ -17,6 +17,7 @@ import { UIPanelId } from '../common/ui/UIPanelRegistry';
 import { GlobalPlayerData } from '../common/GlobalPlayerData';
 import TutorialGuide from './TutorialGuide';
 import { EventName } from '../common/Enum';
+import DeliveryManager from './DeliveryManager';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -58,6 +59,10 @@ export class VwUi extends Component {
     protected timePanel: Node | null = null;
 
     private timeRemainingSec = 0;
+    private deliveringBusy = false;
+
+    @property({ type: DeliveryManager, tooltip: '外卖员玩法管理器（可选）' })
+    protected deliveryManager: DeliveryManager | null = null;
 
     protected onEnable(): void {
         if (this.settingButton?.isValid) {
@@ -97,6 +102,7 @@ export class VwUi extends Component {
         if (GlobalPlayerData.instance.level === 0) {
             this.tutorialGuide?.beginIfNeeded();
         }
+        this.deliveryManager?.resetForRound(this.funlandView?.funland ?? null);
         this.setupLevelTimeLimit();
     }
 
@@ -168,7 +174,41 @@ export class VwUi extends Component {
 
     protected handleCompletePour() {
         this.updateUndoDisplayState();
-        this.checkLevelPassed();
+        void this.processRoundStateAfterPour();
+    }
+
+    private async processRoundStateAfterPour(): Promise<void> {
+        if (this.deliveringBusy) {
+            return;
+        }
+        this.deliveringBusy = true;
+        try {
+            await this.tryAutoDeliverSealedGlasses();
+            this.checkLevelPassed();
+        } finally {
+            this.deliveringBusy = false;
+        }
+    }
+
+    private async tryAutoDeliverSealedGlasses(): Promise<void> {
+        const mgr = this.deliveryManager;
+        if (!mgr || !mgr.hasDeliveryTarget()) {
+            return;
+        }
+        let changed = true;
+        while (changed) {
+            changed = false;
+            const glasses = this.funlandView?.glasses ?? [];
+            for (const glass of glasses) {
+                if (!glass?.node?.isValid || !glass.node.active || !glass.isSealed()) {
+                    continue;
+                }
+                const delivered = await mgr.tryDeliverGlass(glass);
+                if (delivered) {
+                    changed = true;
+                }
+            }
+        }
     }
 
     protected updateUndoDisplayState() {
@@ -215,7 +255,9 @@ export class VwUi extends Component {
         if (glasses.length <= 0) {
             return;
         }
-        const passed = glasses.every((glass) => glass.isEmpty || glass.isSealed());
+        const passed = this.deliveryManager?.hasDeliveryTarget()
+            ? this.deliveryManager.isRoundCompleted()
+            : glasses.every((glass) => glass.isEmpty || glass.isSealed());
         if (!passed) {
             return;
         }

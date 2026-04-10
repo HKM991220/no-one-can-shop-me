@@ -2,7 +2,7 @@
   "ver": "1.0.27",
   "importer": "image",
   "imported": true,
-  "uuid": "e745282a-3b36-4f77-969a-27e4df1c5516",
+  "uuid": "f3961fbb-1081-4253-9a8f-24d4c58f1de6",
   "files": [
     ".json",
     ".png"
@@ -10,8 +10,8 @@
   "subMetas": {
     "6c48a": {
       "importer": "texture",
-      "uuid": "e745282a-3b36-4f77-969a-27e4df1c5516@6c48a",
-      "displayName": "color_1",
+      "uuid": "f3961fbb-1081-4253-9a8f-24d4c58f1de6@6c48a",
+      "displayName": "rider_blue",
       "id": "6c48a",
       "name": "texture",
       "userData": {
@@ -22,7 +22,7 @@
         "mipfilter": "none",
         "anisotropy": 0,
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "e745282a-3b36-4f77-969a-27e4df1c5516",
+        "imageUuidOrDatabaseUri": "f3961fbb-1081-4253-9a8f-24d4c58f1de6",
         "visible": false
       },
       "ver": "1.0.22",
@@ -34,8 +34,8 @@
     },
     "f9941": {
       "importer": "sprite-frame",
-      "uuid": "e745282a-3b36-4f77-969a-27e4df1c5516@f9941",
-      "displayName": "color_1",
+      "uuid": "f3961fbb-1081-4253-9a8f-24d4c58f1de6@f9941",
+      "displayName": "rider_blue",
       "id": "f9941",
       "name": "spriteFrame",
       "userData": {
@@ -113,7 +113,7 @@
           ]
         },
         "isUuid": true,
-        "imageUuidOrDatabaseUri": "e745282a-3b36-4f77-969a-27e4df1c5516@6c48a",
+        "imageUuidOrDatabaseUri": "f3961fbb-1081-4253-9a8f-24d4c58f1de6@6c48a",
         "atlasUuid": "",
         "trimType": "auto"
       },
@@ -129,6 +129,6 @@
     "type": "sprite-frame",
     "hasAlpha": true,
     "fixAlphaTransparencyArtifacts": false,
-    "redirect": "e745282a-3b36-4f77-969a-27e4df1c5516@6c48a"
+    "redirect": "f3961fbb-1081-4253-9a8f-24d4c58f1de6@6c48a"
   }
 }
