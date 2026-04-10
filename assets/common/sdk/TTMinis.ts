@@ -44,6 +44,7 @@ export class TTMinis extends Component {
 	private rewardedVideoAd: any = null;
 	private interstitialAd: any = null;
 	private rewardedAdId: string = "";
+	private interstitialAdId: string = "";
 	private rewardedLoadingPromise: Promise<void> | null = null;
 	private rewardedReady = false;
 	private rewardedShowing = false;
@@ -156,15 +157,19 @@ export class TTMinis extends Component {
 
 		this.rewardedVideoAd = tt.createRewardedVideoAd({ adUnitId: adId });
 
-		this.rewardedVideoAd.onLoad(() => {
-			this.rewardedReady = true;
-			console.log("✅ 激励广告加载完成");
-		});
+		if (typeof this.rewardedVideoAd?.onLoad === "function") {
+			this.rewardedVideoAd.onLoad(() => {
+				this.rewardedReady = true;
+				console.log("✅ 激励广告加载完成");
+			});
+		}
 
-		this.rewardedVideoAd.onError((err) => {
-			this.rewardedReady = false;
-			console.error("[TTMinis] 激励广告 onError", err);
-		});
+		if (typeof this.rewardedVideoAd?.onError === "function") {
+			this.rewardedVideoAd.onError((err) => {
+				this.rewardedReady = false;
+				console.error("[TTMinis] 激励广告 onError", err);
+			});
+		}
 
 		this.loadRewardedAd().catch((e) => {
 			console.error("[TTMinis] 激励广告首次 load 失败（请核对广告位 ID、是否开通激励、测试包是否绑定应用）", e);
@@ -196,6 +201,11 @@ export class TTMinis extends Component {
 			}
 			this.toast("广告未初始化");
 			console.warn("[TTMinis] showRewarded: 无实例。isInTT=", this.isInTT, "adId=", TTConfig.rewardedAdId || "(空)");
+			return;
+		}
+		if (typeof this.rewardedVideoAd.show !== "function") {
+			this.toast("当前环境不支持激励广告");
+			console.warn("[TTMinis] showRewarded: rewardedVideoAd.show 不可用");
 			return;
 		}
 		if (this.rewardedShowing) {
@@ -243,6 +253,11 @@ export class TTMinis extends Component {
 		if (this.rewardedReady) {
 			return Promise.resolve();
 		}
+		if (typeof this.rewardedVideoAd.load !== "function") {
+			// 兼容部分基础库：广告实例不提供 load，直接走 show。
+			this.rewardedReady = true;
+			return Promise.resolve();
+		}
 		if (this.rewardedLoadingPromise) {
 			return this.rewardedLoadingPromise;
 		}
@@ -281,18 +296,23 @@ export class TTMinis extends Component {
 			console.warn("[TTMinis] 当前环境不支持 createInterstitialAd");
 			return;
 		}
+		this.interstitialAdId = adId;
 
 		this.interstitialAd = tt.createInterstitialAd({ adUnitId: adId });
 
 		// 增加错误监听
-		this.interstitialAd.onError((err) => {
-			console.error("[TTMinis] 插屏广告错误:", err);
-		});
+		if (typeof this.interstitialAd?.onError === "function") {
+			this.interstitialAd.onError((err) => {
+				console.error("[TTMinis] 插屏广告错误:", err);
+			});
+		}
 
 		// 增加加载完成监听
-		this.interstitialAd.onLoad(() => {
-			console.log("✅ 插屏广告加载完成");
-		});
+		if (typeof this.interstitialAd?.onLoad === "function") {
+			this.interstitialAd.onLoad(() => {
+				console.log("✅ 插屏广告加载完成");
+			});
+		}
 	}
 
 	/**
@@ -314,30 +334,63 @@ export class TTMinis extends Component {
 			return;
 		}
 
-		const ad = this.interstitialAd;
-		const tryShow = () =>
-			TTMinis.adOpToPromise(ad.show())
+		const attemptShow = (adInst: any, hasRetriedAfterRecreate: boolean) =>
+			TTMinis.adOpToPromise(adInst.show())
 				.then(() => {
 					console.log("[TTMinis] 插屏广告显示成功");
 					onSuccess?.();
 				})
 				.catch((err) => {
+					const code = (err as any)?.errorCode ?? (err as any)?.subErrorCode;
+					if ((code === 11002 || code === 1003) && !hasRetriedAfterRecreate) {
+						console.warn("[TTMinis] 插屏实例失效，重建后重试一次", err);
+						const recreated = this.recreateInterstitialAd();
+						if (recreated) {
+							const newAd = this.interstitialAd;
+							if (newAd && typeof newAd.show === "function") {
+								if (typeof newAd.load === "function") {
+									TTMinis.adOpToPromise(newAd.load())
+										.then(() => attemptShow(newAd, true))
+										.catch((loadErr) => {
+											console.error("[TTMinis] 插屏重建后加载失败:", loadErr);
+											this.toast("广告加载失败");
+											onFail?.(loadErr);
+										});
+								} else {
+									void attemptShow(newAd, true);
+								}
+								return;
+							}
+							onFail?.(err);
+							return;
+						}
+					}
 					console.error("[TTMinis] 插屏广告显示失败:", err);
 					this.toast("广告显示失败");
 					onFail?.(err);
 				});
 
+		const ad = this.interstitialAd;
 		if (typeof ad.load === "function") {
 			TTMinis.adOpToPromise(ad.load())
-				.then(() => tryShow())
+				.then(() => attemptShow(ad, false))
 				.catch((err: unknown) => {
 					console.error("[TTMinis] 插屏广告加载失败:", err);
 					this.toast("广告加载失败");
 					onFail?.(err);
 				});
 		} else {
-			void tryShow();
+			void attemptShow(ad, false);
 		}
+	}
+
+	private recreateInterstitialAd(): boolean {
+		if (!this.isInTT || !this.interstitialAdId) {
+			return false;
+		}
+		this.interstitialAd = null;
+		this.initInterstitial(this.interstitialAdId);
+		return !!this.interstitialAd;
 	}
 
 	// ==============================================

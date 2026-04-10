@@ -13962,22 +13962,6 @@
         "__id__": 581
       }
     ],
-    "lockMasks": [
-      {
-        "__id__": 507
-      },
-      {
-        "__id__": 529
-      }
-    ],
-    "unlockButtons": [
-      {
-        "__id__": 512
-      },
-      {
-        "__id__": 534
-      }
-    ],
     "pendingLabel": null,
     "progressLabel": null,
     "_id": ""

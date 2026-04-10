@@ -1,4 +1,4 @@
-import { _decorator, Button, Label, Node, Sprite, SpriteFrame, Toggle } from 'cc';
+import { _decorator, Button, Event, Label, Node, Sprite, SpriteFrame, Toggle } from 'cc';
 import { GlobalPlayerData } from '../common/GlobalPlayerData';
 import { SimpleUIBase } from '../common/ui/SimpleUIBase';
 import { SimpleUIManager } from '../common/ui/SimpleUIManager';
@@ -161,9 +161,13 @@ export default class SettingView extends SimpleUIBase {
     private bindControls(): void {
         if (this.soundToggle) {
             this.soundToggle.node.on(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
+            this.soundToggle.node.on(Button.EventType.CLICK, this.onSoundToggleNodeClick, this);
+            this.soundToggle.node.on(Node.EventType.TOUCH_END, this.onSoundToggleNodeTouchEnd, this);
         }
         if (this.effectToggle) {
             this.effectToggle.node.on(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
+            this.effectToggle.node.on(Button.EventType.CLICK, this.onEffectToggleNodeClick, this);
+            this.effectToggle.node.on(Node.EventType.TOUCH_END, this.onEffectToggleNodeTouchEnd, this);
         }
         this.bindLanguageToggles();
         if (this.countryCloseButton?.node?.isValid) {
@@ -174,9 +178,13 @@ export default class SettingView extends SimpleUIBase {
     private unbindControls(): void {
         if (this.soundToggle?.isValid) {
             this.soundToggle.node.off(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
+            this.soundToggle.node.off(Button.EventType.CLICK, this.onSoundToggleNodeClick, this);
+            this.soundToggle.node.off(Node.EventType.TOUCH_END, this.onSoundToggleNodeTouchEnd, this);
         }
         if (this.effectToggle?.isValid) {
             this.effectToggle.node.off(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
+            this.effectToggle.node.off(Button.EventType.CLICK, this.onEffectToggleNodeClick, this);
+            this.effectToggle.node.off(Node.EventType.TOUCH_END, this.onEffectToggleNodeTouchEnd, this);
         }
         this.unbindLanguageToggles();
         if (this.countryCloseButton?.node?.isValid) {
@@ -230,14 +238,28 @@ export default class SettingView extends SimpleUIBase {
         }
     }
 
-    private onLanguageToggle(toggle: Toggle): void {
+    private resolveToggleChecked(input: Toggle | Event): boolean | null {
+        if (input instanceof Toggle) {
+            return input.isChecked;
+        }
+        const target = (input.currentTarget as Node | null) ?? null;
+        const tg = target?.getComponent(Toggle) ?? null;
+        return tg ? tg.isChecked : null;
+    }
+
+    private onLanguageToggle(input: Toggle | Event): void {
         if (this._syncingLang) {
             return;
         }
-        if (!toggle.isChecked) {
+        const checked = this.resolveToggleChecked(input);
+        if (checked !== true) {
             return;
         }
-        const localeId = toggle.node.name;
+        const node = input instanceof Toggle ? input.node : ((input.currentTarget as Node | null) ?? null);
+        const localeId = node?.name ?? '';
+        if (!localeId) {
+            return;
+        }
         void I18n.instance.setLocale(localeId).then(() => {
             this.closeCountry();
         });
@@ -245,18 +267,56 @@ export default class SettingView extends SimpleUIBase {
 
 
 
-    private onSoundToggle(toggle: Toggle): void {
+    private onSoundToggle(input: Toggle | Event): void {
         if (this._syncingUi) {
             return;
         }
-        GlobalPlayerData.instance.setMusicEnabled(toggle.isChecked);
+        const checked = this.resolveToggleChecked(input);
+        if (checked === null) {
+            return;
+        }
+        GlobalPlayerData.instance.setMusicEnabled(checked);
     }
 
-    private onEffectToggle(toggle: Toggle): void {
+    private onSoundToggleNodeClick(): void {
+        this.syncMusicFromToggleState();
+    }
+
+    private onSoundToggleNodeTouchEnd(): void {
+        this.syncMusicFromToggleState();
+    }
+
+    private syncMusicFromToggleState(): void {
+        if (this._syncingUi || !this.soundToggle?.isValid) {
+            return;
+        }
+        GlobalPlayerData.instance.setMusicEnabled(this.soundToggle.isChecked);
+    }
+
+    private onEffectToggle(input: Toggle | Event): void {
         if (this._syncingUi) {
             return;
         }
-        GlobalPlayerData.instance.setSfxEnabled(toggle.isChecked);
+        const checked = this.resolveToggleChecked(input);
+        if (checked === null) {
+            return;
+        }
+        GlobalPlayerData.instance.setSfxEnabled(checked);
+    }
+
+    private onEffectToggleNodeClick(): void {
+        this.syncSfxFromToggleState();
+    }
+
+    private onEffectToggleNodeTouchEnd(): void {
+        this.syncSfxFromToggleState();
+    }
+
+    private syncSfxFromToggleState(): void {
+        if (this._syncingUi || !this.effectToggle?.isValid) {
+            return;
+        }
+        GlobalPlayerData.instance.setSfxEnabled(this.effectToggle.isChecked);
     }
 
     private onHomeClick(): void {
