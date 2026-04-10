@@ -202,6 +202,20 @@ export class GlobalPlayerData {
         return this._lastStaminaUtc;
     }
 
+    /** 距离下次自动恢复 1 点体力的剩余毫秒；满体力时返回 0 */
+    public getNextStaminaRecoverRemainMs(): number {
+        this.applyStaminaRecoveryIfNeeded();
+        if (this._stamina >= this._staminaMax) {
+            return 0;
+        }
+        if (!this._lastStaminaUtc || !Number.isFinite(this._lastStaminaUtc)) {
+            return GameplayConst.STAMINA_RECOVER_INTERVAL_MS;
+        }
+        const elapsed = Math.max(0, Date.now() - this._lastStaminaUtc);
+        const remain = GameplayConst.STAMINA_RECOVER_INTERVAL_MS - elapsed;
+        return Math.max(0, remain);
+    }
+
     public setStaminaMax(max: number): void {
         const m = clampInt(max, 1, GameplayConst.DEFAULT_STAMINA_MAX);
         if (m === this._staminaMax) {

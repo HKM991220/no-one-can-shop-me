@@ -49,15 +49,18 @@ export class Mian extends Component {
      * 首屏需 `loadBundle` 完成的包名，与 assets 里勾选为 Asset Bundle 的文件夹名一致。
      */
     private static readonly ENTRY_BUNDLE_NAMES: readonly string[] = [];
+    private static readonly STAMINA_REFRESH_INTERVAL_SEC = 1;
 
     protected onEnable(): void {
         this.btnSetting?.node.on(Button.EventType.CLICK, this.onSettingClick, this);
         EventMng.on(EventName.PLAYER_RESOURCE_CHANGED, this.initUI, this);
+        this.schedule(this.onStaminaTick, Mian.STAMINA_REFRESH_INTERVAL_SEC);
     }
 
     protected onDisable(): void {
         this.btnSetting?.node.off(Button.EventType.CLICK, this.onSettingClick, this);
         EventMng.off(EventName.PLAYER_RESOURCE_CHANGED, this.initUI, this);
+        this.unschedule(this.onStaminaTick);
     }
 
     protected async start(): Promise<void> {
@@ -103,8 +106,25 @@ export class Mian extends Component {
             this.labelGold.string = `${playerData.coins}`;
         }
         if (this.labelStamina?.isValid) {
-            this.labelStamina.string = `${playerData.stamina}`;
+            if (playerData.stamina >= playerData.staminaMax) {
+                this.labelStamina.string = `${playerData.stamina}`;
+            } else {
+                const remainMs = playerData.getNextStaminaRecoverRemainMs();
+                this.labelStamina.string = this.formatRemainMs(remainMs);
+            }
         }
+    }
+
+    private onStaminaTick = (): void => {
+        this.initUI();
+    };
+
+    private formatRemainMs(ms: number): string {
+        const totalSec = Math.max(0, Math.ceil(ms / 1000));
+        const min = Math.floor(totalSec / 60);
+        const sec = totalSec % 60;
+        const secStr = sec < 10 ? `0${sec}` : `${sec}`;
+        return `${min}:${secStr}`;
     }
 
 
