@@ -4,6 +4,8 @@ import { SimpleUIBase } from '../common/ui/SimpleUIBase';
 import { SimpleUIManager } from '../common/ui/SimpleUIManager';
 import { UIPanelId } from '../common/ui/UIPanelRegistry';
 import { I18n } from '../common/i18n/I18n';
+import { VwPlay } from './VwPlay';
+import { TTMinis } from '../common/sdk/TTMinis';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -262,7 +264,20 @@ export default class SettingView extends SimpleUIBase {
         SimpleUIManager.instance.close(UIPanelId.SETTING);
     }
 
-
+    // 重开
+    protected onRestartClick(): void {
+        const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
+        const vw = gameRoot?.getComponentInChildren(VwPlay);
+        if (vw?.isValid) {
+            if (!vw.canStartRound()) {
+                TTMinis.ensureInitialized().toast('体力不足');
+                return;
+            }
+            SimpleUIManager.instance.close(UIPanelId.SETTING);
+            vw.startRound();
+            return;
+        }
+    }
     private closeView(): void {
         SimpleUIManager.instance.close(UIPanelId.SETTING);
     }

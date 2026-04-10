@@ -41,6 +41,20 @@ export const WaterColors: Record<WaterColor, ColorSet> = {
     [WaterColor.Black]: { base: '#000000FF', surface: '#000000FF' },
 };
 
+/** 玩法数值常量（与存档/结算等业务共用） */
+export const GameplayConst = {
+    /** 默认体力上限/初始体力 */
+    DEFAULT_STAMINA_MAX: 10,
+    /** 每开一局消耗体力 */
+    STAMINA_COST_PER_ROUND: 1,
+    /** 自动恢复体力间隔（15 分钟 1 点） */
+    STAMINA_RECOVER_INTERVAL_MS: 15 * 60 * 1000,
+    /** 看视频恢复体力：每次 +1 */
+    STAMINA_PER_REWARDED_AD: 1,
+    /** 每名玩家每天最多通过视频恢复体力次数 */
+    DAILY_REWARDED_STAMINA_LIMIT: 10,
+} as const;
+
 /** 关卡 JSON 等处的原始数字可能超出枚举；取不到配色时用于避免崩溃 */
 export function getWaterColorSet(id: number): ColorSet {
     const set = (WaterColors as Record<number, ColorSet | undefined>)[id];

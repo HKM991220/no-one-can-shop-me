@@ -7,12 +7,15 @@ import { TTMinis } from "../common/sdk/TTMinis";
 import { GlobalPlayerData } from "../common/GlobalPlayerData";
 import EventMng from "../common/EventMng";
 import { EventName } from "../common/Enum";
+import { GameplayConst } from "./CwgConstant";
 
 const { ccclass, menu, property } = _decorator;
 
 @ccclass("SalaView")
 @menu("cwg/SalaView")
 export default class SalaView extends SimpleUIBase {
+	private static readonly VIDEO_STAMINA_DATE_KEY = "stamina_video_reward_date";
+	private static readonly VIDEO_STAMINA_COUNT_KEY = "stamina_video_reward_count";
 	@property(Button)
 	protected startButton: Button | null = null;
 
@@ -71,12 +74,23 @@ export default class SalaView extends SimpleUIBase {
 
 	onStartClick() {
 		void (async () => {
+			if (GlobalPlayerData.instance.stamina < GameplayConst.STAMINA_COST_PER_ROUND) {
+				this.tt().toast("体力不足");
+				this.notifyResourceChanged();
+				return;
+			}
 			await SimpleUIManager.instance.open(UIPanelId.GAME, undefined, {
 				pushToStack: false,
 			});
 			// 结算回大厅时 Game 可能一直未失活，onEnable 不会触发；须按存档关卡重新加载（教程通关后进入第 2 关）
 			const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
-			gameRoot?.getComponentInChildren(VwPlay)?.syncProgressAndRestart();
+			const vw = gameRoot?.getComponentInChildren(VwPlay);
+			const started = vw?.startRound() !== false;
+			if (!started) {
+				this.tt().toast("体力不足");
+				SimpleUIManager.instance.close(UIPanelId.GAME);
+				return;
+			}
 			SimpleUIManager.instance.close(UIPanelId.SALA);
 		})();
 	}
@@ -156,17 +170,85 @@ export default class SalaView extends SimpleUIBase {
 
 	// 激励视频
 	onRewardedAdClick() {
+		const player = GlobalPlayerData.instance;
+		if (player.stamina >= player.staminaMax) {
+			this.tt().toast("体力已满");
+			return;
+		}
+		const remainBefore = this.getTodayVideoRewardRemain();
+		if (remainBefore <= 0) {
+			this.tt().toast("今日体力视频次数已用完");
+			return;
+		}
 		const sdk = this.tt();
 		sdk.showRewarded(
 			() => {
-				console.log("✅ 广告看完，发奖励！");
-				sdk.toast("奖励已发放");
+				const remain = this.tryGrantStaminaByVideo();
+				if (remain < 0) {
+					sdk.toast("今日体力视频次数已用完");
+					return;
+				}
+				console.log("✅ 广告看完，恢复体力");
+				sdk.toast(`体力+${GameplayConst.STAMINA_PER_REWARDED_AD}（今日剩余${remain}次）`);
 			},
 			() => {
 				console.log("用户跳过广告");
 				sdk.toast("未看完广告，无奖励");
 			},
 		);
+	}
+
+	private getTodayKey(): string {
+		const d = new Date();
+		const y = d.getFullYear();
+		const mNum = d.getMonth() + 1;
+		const dayNum = d.getDate();
+		const m = mNum < 10 ? `0${mNum}` : `${mNum}`;
+		const day = dayNum < 10 ? `0${dayNum}` : `${dayNum}`;
+		return `${y}-${m}-${day}`;
+	}
+
+	private getTodayVideoRewardRemain(): number {
+		const player = GlobalPlayerData.instance;
+		const today = this.getTodayKey();
+		const savedDate = player.getSetting<string>(SalaView.VIDEO_STAMINA_DATE_KEY, "");
+		let count = Number(player.getSetting<number>(SalaView.VIDEO_STAMINA_COUNT_KEY, 0));
+		if (!Number.isFinite(count) || count < 0) {
+			count = 0;
+		}
+		if (savedDate !== today) {
+			return GameplayConst.DAILY_REWARDED_STAMINA_LIMIT;
+		}
+		return Math.max(0, GameplayConst.DAILY_REWARDED_STAMINA_LIMIT - Math.floor(count));
+	}
+
+	/**
+	 * 发放视频体力奖励
+	 * @returns 剩余可领奖次数；返回 -1 表示今日次数已用完或不应发奖
+	 */
+	private tryGrantStaminaByVideo(): number {
+		const player = GlobalPlayerData.instance;
+		const today = this.getTodayKey();
+		const savedDate = player.getSetting<string>(SalaView.VIDEO_STAMINA_DATE_KEY, "");
+		let count = Number(player.getSetting<number>(SalaView.VIDEO_STAMINA_COUNT_KEY, 0));
+		if (!Number.isFinite(count) || count < 0) {
+			count = 0;
+		}
+		if (savedDate !== today) {
+			count = 0;
+			player.setSetting(SalaView.VIDEO_STAMINA_DATE_KEY, today);
+		}
+		if (count >= GameplayConst.DAILY_REWARDED_STAMINA_LIMIT) {
+			return -1;
+		}
+		if (player.stamina >= player.staminaMax) {
+			return -1;
+		}
+		player.setStamina(player.stamina + GameplayConst.STAMINA_PER_REWARDED_AD);
+		count += 1;
+		player.setSetting(SalaView.VIDEO_STAMINA_COUNT_KEY, count);
+		this.notifyResourceChanged();
+		return Math.max(0, GameplayConst.DAILY_REWARDED_STAMINA_LIMIT - count);
 	}
 
 	// 插屏广告

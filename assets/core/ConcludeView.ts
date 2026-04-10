@@ -144,11 +144,15 @@ export default class ConcludeView extends SimpleUIBase {
 
     // 重开
     protected onRestartClick(): void {
-        SimpleUIManager.instance.close(UIPanelId.CONCLUDE);
         const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
         const vw = gameRoot?.getComponentInChildren(VwPlay);
         if (vw?.isValid) {
-            vw.applyConcludeNext(false);
+            if (!vw.canStartRound()) {
+                TTMinis.ensureInitialized().toast("体力不足");
+                return;
+            }
+            SimpleUIManager.instance.close(UIPanelId.CONCLUDE);
+            vw.startRound();
             return;
         }
     }

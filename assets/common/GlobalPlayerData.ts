@@ -4,6 +4,7 @@
  */
 import LocalStorage from './LocalStorage';
 import { GameAudioSettings } from './AudioSetting';
+import { GameplayConst } from '../core/CwgConstant';
 
 export const GLOBAL_PLAYER_STORAGE_KEY = 'cwg_global_player_data_v1';
 
@@ -28,8 +29,8 @@ const DEFAULT_SNAPSHOT: Omit<GlobalPlayerDataSnapshotV1, 'version'> = {
     language: 'zh-Hans',
     coins: 0,
     level: 0,
-    stamina: 100,
-    staminaMax: 100,
+    stamina: GameplayConst.DEFAULT_STAMINA_MAX,
+    staminaMax: GameplayConst.DEFAULT_STAMINA_MAX,
     settings: {},
 };
 
@@ -72,6 +73,7 @@ export class GlobalPlayerData {
         const raw = LocalStorage.getJson(GLOBAL_PLAYER_STORAGE_KEY) as Partial<GlobalPlayerDataSnapshotV1> | null;
         const merged = this.mergeSnapshot(raw);
         this.applySnapshot(merged);
+        this.applyStaminaRecoveryIfNeeded();
     }
 
     /** 强制重新从磁盘合并（一般不需要） */
@@ -79,6 +81,7 @@ export class GlobalPlayerData {
         this._loaded = true;
         const raw = LocalStorage.getJson(GLOBAL_PLAYER_STORAGE_KEY) as Partial<GlobalPlayerDataSnapshotV1> | null;
         this.applySnapshot(this.mergeSnapshot(raw));
+        this.applyStaminaRecoveryIfNeeded();
     }
 
     public save(): void {
@@ -91,7 +94,7 @@ export class GlobalPlayerData {
         const staminaMax = clampInt(
             typeof s.staminaMax === 'number' ? s.staminaMax : DEFAULT_SNAPSHOT.staminaMax,
             1,
-            999999,
+            GameplayConst.DEFAULT_STAMINA_MAX,
         );
         let stamina = clampInt(
             typeof s.stamina === 'number' ? s.stamina : DEFAULT_SNAPSHOT.stamina,
@@ -187,6 +190,7 @@ export class GlobalPlayerData {
 
     // --- 体力 ---
     public get stamina(): number {
+        this.applyStaminaRecoveryIfNeeded();
         return this._stamina;
     }
 
@@ -199,22 +203,33 @@ export class GlobalPlayerData {
     }
 
     public setStaminaMax(max: number): void {
-        const m = clampInt(max, 1, 999999);
+        const m = clampInt(max, 1, GameplayConst.DEFAULT_STAMINA_MAX);
         if (m === this._staminaMax) {
             return;
         }
         this._staminaMax = m;
         this._stamina = Math.min(this._stamina, m);
+        if (this._stamina >= this._staminaMax) {
+            this._lastStaminaUtc = undefined;
+        } else if (!this._lastStaminaUtc) {
+            this._lastStaminaUtc = Date.now();
+        }
         this.save();
     }
 
     /** 直接设置当前体力（不超过上限） */
     public setStamina(value: number): void {
+        this.applyStaminaRecoveryIfNeeded();
         const v = clampInt(value, 0, this._staminaMax);
         if (v === this._stamina) {
             return;
         }
         this._stamina = v;
+        if (this._stamina >= this._staminaMax) {
+            this._lastStaminaUtc = undefined;
+        } else if (!this._lastStaminaUtc) {
+            this._lastStaminaUtc = Date.now();
+        }
         this.save();
     }
 
@@ -222,12 +237,15 @@ export class GlobalPlayerData {
      * 消耗体力；不足时返回 false 且不扣减
      */
     public tryConsumeStamina(cost: number): boolean {
+        this.applyStaminaRecoveryIfNeeded();
         const c = Math.max(1, Math.floor(Number.isFinite(cost) ? cost : 1));
         if (this._stamina < c) {
             return false;
         }
         this._stamina -= c;
-        this._lastStaminaUtc = Date.now();
+        if (this._stamina < this._staminaMax && !this._lastStaminaUtc) {
+            this._lastStaminaUtc = Date.now();
+        }
         this.save();
         return true;
     }
@@ -236,10 +254,42 @@ export class GlobalPlayerData {
      * 补满体力（或加到上限）
      */
     public refillStamina(): void {
+        this.applyStaminaRecoveryIfNeeded();
         if (this._stamina >= this._staminaMax) {
             return;
         }
         this._stamina = this._staminaMax;
+        this._lastStaminaUtc = undefined;
+        this.save();
+    }
+
+    /** 根据时间自动恢复体力：每 15 分钟 +1，直到上限 */
+    private applyStaminaRecoveryIfNeeded(): void {
+        if (this._stamina >= this._staminaMax) {
+            if (this._lastStaminaUtc !== undefined) {
+                this._lastStaminaUtc = undefined;
+                this.save();
+            }
+            return;
+        }
+        const now = Date.now();
+        if (!this._lastStaminaUtc || !Number.isFinite(this._lastStaminaUtc)) {
+            this._lastStaminaUtc = now;
+            this.save();
+            return;
+        }
+        const interval = GameplayConst.STAMINA_RECOVER_INTERVAL_MS;
+        const elapsed = Math.max(0, now - this._lastStaminaUtc);
+        const recovered = Math.floor(elapsed / interval);
+        if (recovered <= 0) {
+            return;
+        }
+        this._stamina = Math.min(this._staminaMax, this._stamina + recovered);
+        if (this._stamina >= this._staminaMax) {
+            this._lastStaminaUtc = undefined;
+        } else {
+            this._lastStaminaUtc += recovered * interval;
+        }
         this.save();
     }
 

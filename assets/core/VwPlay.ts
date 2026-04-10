@@ -14,6 +14,7 @@ import FunlandInfo from './FunlandInfo';
 import { GlobalPlayerData } from '../common/GlobalPlayerData';
 import EventMng from '../common/EventMng';
 import { EventName } from '../common/Enum';
+import { GameplayConst } from './CwgConstant';
 
 const { ccclass, menu, property } = _decorator;
 
@@ -35,12 +36,14 @@ export class VwPlay extends Component {
 
     private _restartLevelBusy = false;
     private _restartLevelPending = false;
+    private _restartLevelPendingConsumeStamina = false;
+    private _pendingStartRound = false;
 
     protected onEnable(): void {
         EventMng.on(EventName.GAME_CONCLUDE_NEXT, this.onConcludeNext, this);
         // 面板曾被隐藏再显示时同步存档关卡（教程通关只写了 GlobalPlayerData 时，内存里的 CwgState 可能仍是 0）
         if (this.gameState && this.funland) {
-            void this.restartLevel();
+            void this.restartLevel(false);
         }
     }
 
@@ -57,7 +60,28 @@ export class VwPlay extends Component {
         if (!this.canRunRestart()) {
             return;     
         }
-        void this.restartLevel();
+        void this.restartLevel(false);
+    }
+
+    /**
+     * 开始一局新游戏（消耗体力并重置关卡）。
+     * @returns false 表示体力不足，true 表示已启动或已进入启动队列
+     */
+    public startRound(): boolean {
+        if (!this.canStartRound()) {
+            this.emitResourceChanged();
+            return false;
+        }
+        if (!this.canRunRestart()) {
+            this._pendingStartRound = true;
+            return true;
+        }
+        void this.restartLevel(true);
+        return true;
+    }
+
+    public canStartRound(): boolean {
+        return GlobalPlayerData.instance.stamina >= GameplayConst.STAMINA_COST_PER_ROUND;
     }
 
     /**
@@ -70,7 +94,7 @@ export class VwPlay extends Component {
         if (advance) {
             this.funland.nextLevel();
         }
-        void this.restartLevel();
+        void this.restartLevel(true);
     }
 
     /** `start()` 创建 gameState 之前不能重置，否则 `gameState.reset` 会报错 */
@@ -91,25 +115,41 @@ export class VwPlay extends Component {
         this.gameState = new CwgState();
         this.funland = new FunlandInfo();
         this.funland.init(this.gameState);
-        void this.restartLevel();
+        if (this._pendingStartRound) {
+            this._pendingStartRound = false;
+            void this.restartLevel(true);
+            return;
+        }
+        void this.restartLevel(false);
     }
 
     /**
      * 重新开始当前关卡
      * 重置游戏状态、关卡数据，并重新初始化视图
      */
-    protected async restartLevel() {
+    protected async restartLevel(consumeStamina: boolean) {
         if (!this.canRunRestart()) {
             return;
         }
         if (this._restartLevelBusy) {
             this._restartLevelPending = true;
+            this._restartLevelPendingConsumeStamina =
+                this._restartLevelPendingConsumeStamina || consumeStamina;
             return;
         }
         this._restartLevelBusy = true;
         try {
             do {
+                const needConsumeStaminaNow = consumeStamina || this._restartLevelPendingConsumeStamina;
                 this._restartLevelPending = false;
+                this._restartLevelPendingConsumeStamina = false;
+                if (needConsumeStaminaNow && !GlobalPlayerData.instance.tryConsumeStamina(GameplayConst.STAMINA_COST_PER_ROUND)) {
+                    this.emitResourceChanged();
+                    break;
+                }
+                if (needConsumeStaminaNow) {
+                    this.emitResourceChanged();
+                }
                 // 重置游戏状态
                 this.gameState.reset();
                 // 重置关卡数据（内部 getData 会 syncLevelFromGlobal）
@@ -121,6 +161,7 @@ export class VwPlay extends Component {
 
                 // 开始游戏
                 this.play.playStart();
+                consumeStamina = false;
             } while (this._restartLevelPending);
         } finally {
             this._restartLevelBusy = false;
@@ -134,6 +175,13 @@ export class VwPlay extends Component {
         this.blockerNode.active = GlobalPlayerData.instance.level === 0;
     }
 
+    private emitResourceChanged(): void {
+        EventMng.emit(EventName.PLAYER_RESOURCE_CHANGED, {
+            coins: GlobalPlayerData.instance.coins,
+            stamina: GlobalPlayerData.instance.stamina,
+        });
+    }
+
     /**
      * 切换到上一个或下一个关卡
      * @param _ - 事件对象（未使用）
@@ -145,7 +193,7 @@ export class VwPlay extends Component {
         } else {
             this.funland.nextLevel();
         }
-        this.restartLevel();
+        this.restartLevel(false);
     }
 
     protected openLevelEditor() {

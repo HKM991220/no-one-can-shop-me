@@ -2,6 +2,9 @@ import { _decorator, Button, Sprite, SpriteFrame } from "cc";
 import { SimpleUIBase } from "../common/ui/SimpleUIBase";
 import { SimpleUIManager } from "../common/ui/SimpleUIManager";
 import { UIPanelId } from "../common/ui/UIPanelRegistry";
+import { VwPlay } from "./VwPlay";
+import { GlobalPlayerData } from "../common/GlobalPlayerData";
+import { GameplayConst } from "./CwgConstant";
 
 
 const { ccclass, menu, property } = _decorator;
@@ -40,10 +43,25 @@ export default class StoryLineView extends SimpleUIBase {
             return;
         }
         if (this.storyIndex >= total - 1) {
+            if (GlobalPlayerData.instance.stamina < GameplayConst.STAMINA_COST_PER_ROUND) {
+                await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, {
+                    pushToStack: false,
+                });
+                SimpleUIManager.instance.close(UIPanelId.STORY_LINE);
+                return;
+            }
             SimpleUIManager.instance.close(UIPanelId.STORY_LINE);
             await SimpleUIManager.instance.open(UIPanelId.GAME, undefined, {
                 pushToStack: false,
             });
+            const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
+            const started = gameRoot?.getComponentInChildren(VwPlay)?.startRound() !== false;
+            if (!started) {
+                SimpleUIManager.instance.close(UIPanelId.GAME);
+                await SimpleUIManager.instance.open(UIPanelId.SALA, undefined, {
+                    pushToStack: false,
+                });
+            }
             return;
         }
         this.storyIndex += 1;
