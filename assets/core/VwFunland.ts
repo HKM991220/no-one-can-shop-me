@@ -6,7 +6,7 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime: 2025-07-22
  */
-import {_decorator, Component, EventTouch, Node, v3, Vec2} from 'cc';
+import {_decorator, Component, EventTouch, Node, Tween, v3, Vec2, Vec3, tween} from 'cc';
 import {CwgPools} from "./CwgPools";
 import Glass from "./Glass";
 import {WaterColor} from './CwgConstant';
@@ -22,6 +22,9 @@ const {ccclass, menu, property} = _decorator;
 @ccclass('VwFunland')
 @menu('cwg/VwFunland')
 export class VwFunland extends Component {
+    private static readonly IDLE_HINT_DELAY_SEC = 10;
+    private static readonly HINT_SCALE = 1.08;
+    private static readonly HINT_TWEEN_SEC = 0.35;
 
     @property(Node)
     protected contentNode: Node;
@@ -46,14 +49,23 @@ export class VwFunland extends Component {
 
     public finished: boolean = false;
     private selectValidator: ((glass: Glass) => boolean) | null = null;
+    private hintedGlasses: [Glass, Glass] | null = null;
+    private hintedOriginalScales: Vec3[] = [];
 
     protected onLoad() {
         console.log("StVwFunland")
     }
 
+    protected onDisable(): void {
+        this.unschedule(this.onIdleTimeout);
+        this.clearIdleHint();
+    }
+
     // 初始化游乐场布局
     public reset(funland: FunlandInfo) {
         this.funland = funland;
+        this.clearIdleHint();
+        this.unschedule(this.onIdleTimeout);
 
         this.glassesNode.removeAllChildren();
         this.glasses = [];
@@ -97,6 +109,7 @@ export class VwFunland extends Component {
             if (this.finished) {
                 return;
             }
+            this.markUserInteraction();
 
             // 判断哪个瓶子被点击到了
             // 查找被点击的玻璃瓶
@@ -276,10 +289,12 @@ export class VwFunland extends Component {
     public playStart() {
         this.setTouchListener();
         this.finished = false;
+        this.markUserInteraction();
     }
 
     public setSelectValidator(validator: ((glass: Glass) => boolean) | null): void {
         this.selectValidator = validator;
+        this.markUserInteraction();
     }
 
     protected handleAdGlass(glass: Glass) {
@@ -304,6 +319,7 @@ export class VwFunland extends Component {
             glass.reset(colors);
         })
         this.undoStack = undefined;
+        this.markUserInteraction();
     }
 
     public addEmptyGlass(addGlassInfo: GlassInfo) {
@@ -320,6 +336,111 @@ export class VwFunland extends Component {
             // 创建一个新瓶子
             const glass = this.createGlass(addGlassInfo);
             this.glasses.push(glass);
+            this.markUserInteraction();
         }
+    }
+
+    private markUserInteraction(): void {
+        this.clearIdleHint();
+        this.unschedule(this.onIdleTimeout);
+        if (!this.finished) {
+            this.scheduleOnce(this.onIdleTimeout, VwFunland.IDLE_HINT_DELAY_SEC);
+        }
+    }
+
+    private onIdleTimeout = (): void => {
+        if (this.finished) {
+            return;
+        }
+        const pair = this.findSameColorTransferPair();
+        if (!pair) {
+            this.clearIdleHint();
+            return;
+        }
+        this.playIdleHint(pair[0], pair[1]);
+    };
+
+    private findSameColorTransferPair(): [Glass, Glass] | null {
+        const candidates = this.glasses.filter(
+            (g) =>
+                !!g?.node?.isValid &&
+                g.node.active &&
+                !g.isAd() &&
+                !g.isSealed() &&
+                !g.isAllHide(),
+        );
+        for (const source of candidates) {
+            if (source.isEmpty) {
+                continue;
+            }
+            for (const target of candidates) {
+                if (target === source || target.isFull || target.isEmpty) {
+                    continue;
+                }
+                if (source.waterColorID === target.waterColorID) {
+                    return [source, target];
+                }
+            }
+        }
+        return null;
+    }
+
+    private playIdleHint(a: Glass, b: Glass): void {
+        if (
+            this.hintedGlasses &&
+            this.hintedGlasses[0] === a &&
+            this.hintedGlasses[1] === b
+        ) {
+            return;
+        }
+        this.clearIdleHint();
+        this.hintedGlasses = [a, b];
+        this.hintedOriginalScales = [
+            a.node.scale.clone(),
+            b.node.scale.clone(),
+        ];
+        this.startPulse(a.node);
+        this.startPulse(b.node);
+    }
+
+    private startPulse(node: Node): void {
+        if (!node?.isValid) {
+            return;
+        }
+        const base = node.scale.clone();
+        const target = new Vec3(
+            base.x * VwFunland.HINT_SCALE,
+            base.y * VwFunland.HINT_SCALE,
+            base.z,
+        );
+        Tween.stopAllByTarget(node);
+        tween(node)
+            .to(VwFunland.HINT_TWEEN_SEC, { scale: target })
+            .to(VwFunland.HINT_TWEEN_SEC, { scale: base })
+            .union()
+            .repeatForever()
+            .start();
+    }
+
+    private clearIdleHint(): void {
+        if (!this.hintedGlasses) {
+            return;
+        }
+        const [a, b] = this.hintedGlasses;
+        const [sa, sb] = this.hintedOriginalScales;
+        if (a?.node?.isValid) {
+            Tween.stopAllByTarget(a.node);
+            if (sa) {
+                a.node.setScale(sa);
+            }
+        }
+        if (b?.node?.isValid) {
+            Tween.stopAllByTarget(b.node);
+            if (sb) {
+                b.node.setScale(sb);
+            }
+        }
+        this.hintedGlasses = null;
+        this.hintedOriginalScales = [];
     }
 }

@@ -21,6 +21,10 @@ export type LevelStruct = {
      * 通关限时（秒）。缺省或 ≤0 表示不限时（兼容旧关卡）。
      */
     timeLimitSec?: number
+    /**
+     * 通关结算时发放的金币（缺省或 ≤0 表示无额外奖励，兼容旧关卡）。
+     */
+    coinReward?: number
 }
 
 export default class FunlandInfo {
@@ -31,6 +35,9 @@ export default class FunlandInfo {
 
     /** 当前关卡限时（秒），0 表示不限时 */
     public timeLimitSec = 0;
+
+    /** 通关结算发放的金币，0 表示本关无此项奖励 */
+    public coinReward = 0;
 
     public state: CwgState;
 
@@ -72,11 +79,12 @@ export default class FunlandInfo {
     public resetLvData(save: LevelStruct) {
         const t = save.timeLimitSec;
         this.timeLimitSec = typeof t === 'number' && t > 0 ? Math.floor(t) : 0;
+        const c = save.coinReward;
+        this.coinReward = typeof c === 'number' && c > 0 && Number.isFinite(c) ? Math.floor(c) : 0;
         this.glasses = save.level;
         // 重新排序，根据position.y
         this.glasses.sort((a: GlassInfo, b: GlassInfo) => {
             return b.position.y - a.position.y;
         });
     }
-
 }

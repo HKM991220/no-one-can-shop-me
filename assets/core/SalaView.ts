@@ -2,6 +2,7 @@ import { SimpleUIBase } from "../common/ui/SimpleUIBase";
 import { _decorator, Button, Label, Node } from "cc";
 import { SimpleUIManager } from "../common/ui/SimpleUIManager";
 import { UIPanelId } from "../common/ui/UIPanelRegistry";
+import { VwPlay } from "./VwPlay";
 import { TTMinis } from "../common/sdk/TTMinis";
 import { GlobalPlayerData } from "../common/GlobalPlayerData";
 import EventMng from "../common/EventMng";
@@ -69,10 +70,15 @@ export default class SalaView extends SimpleUIBase {
 	}
 
 	onStartClick() {
-		void SimpleUIManager.instance.open(UIPanelId.GAME, undefined, {
-			pushToStack: false,
-		});
-		SimpleUIManager.instance.close(UIPanelId.SALA);
+		void (async () => {
+			await SimpleUIManager.instance.open(UIPanelId.GAME, undefined, {
+				pushToStack: false,
+			});
+			// 结算回大厅时 Game 可能一直未失活，onEnable 不会触发；须按存档关卡重新加载（教程通关后进入第 2 关）
+			const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
+			gameRoot?.getComponentInChildren(VwPlay)?.syncProgressAndRestart();
+			SimpleUIManager.instance.close(UIPanelId.SALA);
+		})();
 	}
 
 	// 绑定所有按钮

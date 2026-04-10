@@ -5,6 +5,8 @@ import { UIPanelId } from "../common/ui/UIPanelRegistry";
 import { TTMinis } from "../common/sdk/TTMinis";
 import EventMng from "../common/EventMng";
 import { EventName } from "../common/Enum";
+import { VwPlay } from "./VwPlay";
+import { GlobalPlayerData } from "../common/GlobalPlayerData";
 
 const { ccclass, menu } = _decorator;
 
@@ -13,6 +15,8 @@ export type ConcludeViewOpenData = {
     success?: boolean;
     /** 教程首通已在 levelPassed 中提升关卡，点「下一关」时不应再执行 nextLevel */
     skipAdvanceOnNext?: boolean;
+    /** 本关通关金币奖励（来自关卡 JSON `coinReward`，打开结算成功页时发放） */
+    coinReward?: number;
 };
 
 const FAIL_TITLE_RES = "images/conclude/challenge failed";
@@ -29,6 +33,18 @@ export default class ConcludeView extends SimpleUIBase {
         this.outcomeSuccess = data?.success !== false;
         this.skipAdvanceOnNext = data?.skipAdvanceOnNext === true;
         void this.applyOutcome(this.outcomeSuccess);
+        if (this.outcomeSuccess) {
+            const raw = data?.coinReward;
+            const coin =
+                typeof raw === "number" && Number.isFinite(raw) ? Math.max(0, Math.floor(raw)) : 0;
+            if (coin > 0) {
+                GlobalPlayerData.instance.addCoins(coin);
+                EventMng.emit(EventName.PLAYER_RESOURCE_CHANGED, {
+                    coins: GlobalPlayerData.instance.coins,
+                    stamina: GlobalPlayerData.instance.stamina,
+                });
+            }
+        }
     }
 
     private async applyOutcome(success: boolean): Promise<void> {
@@ -111,10 +127,29 @@ export default class ConcludeView extends SimpleUIBase {
     /**
      * 「下一关」：通关且非教程首通时先进关再重开；失败时同关重开。
      * 预制体里方法名保持 onNxetLevelClick（拼写与按钮绑定一致）。
+     * 优先直接驱动 VwPlay：Game 常处于 active，与仅 emit 相比更可靠；找不到 Game 时回退事件。
      */
     protected onNxetLevelClick(): void {
         SimpleUIManager.instance.close(UIPanelId.CONCLUDE);
         const advance = this.outcomeSuccess && !this.skipAdvanceOnNext;
+
+        const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
+        const vw = gameRoot?.getComponentInChildren(VwPlay);
+        if (vw?.isValid) {
+            vw.applyConcludeNext(advance);
+            return;
+        }
         EventMng.emit(EventName.GAME_CONCLUDE_NEXT, { advance });
+    }
+
+    // 重开
+    protected onRestartClick(): void {
+        SimpleUIManager.instance.close(UIPanelId.CONCLUDE);
+        const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
+        const vw = gameRoot?.getComponentInChildren(VwPlay);
+        if (vw?.isValid) {
+            vw.applyConcludeNext(false);
+            return;
+        }
     }
 }

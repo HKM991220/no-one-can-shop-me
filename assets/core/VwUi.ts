@@ -228,8 +228,13 @@ export class VwUi extends Component {
         /** 教程首通在 levelPassed 里已从 0→1，结算「下一关」不应再 +1 */
         const skipAdvanceOnNext =
             levelBeforePass === 0 && GlobalPlayerData.instance.level > levelBeforePass;
+        const coinReward = Math.max(0, Math.floor(this.funlandView?.funland?.coinReward ?? 0));
         void SimpleUIManager.instance
-            .open(UIPanelId.CONCLUDE, { success: true, skipAdvanceOnNext }, { pushToStack: false })
+            .open(
+                UIPanelId.CONCLUDE,
+                { success: true, skipAdvanceOnNext, coinReward },
+                { pushToStack: false },
+            )
             .then((ok) => {
                 if (!ok) {
                     console.warn('[VwUi] 打开结算失败：Conclude 未注册或 SimpleUIManager 未就绪');
