@@ -11,6 +11,9 @@
     "language": "語言",
     "country": "國家"
   },
+  "game": {
+    "exchangeTip": "點擊要交換顏色的瓶子"
+  },
   "tutorial": {
     "step1": "點擊這個瓶子",
     "step2": "再點擊這個瓶子，把水倒過去",

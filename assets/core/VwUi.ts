@@ -65,12 +65,14 @@ export class VwUi extends Component {
     protected deliveryManager: DeliveryManager | null = null;
 
     protected onEnable(): void {
+        EventMng.on(EventName.EXCHANGE_UI_CLOSED, this.showBottomNode, this);
         if (this.settingButton?.isValid) {
             this.settingButton.node.on(Button.EventType.CLICK, this.onSettingClick, this);
         }
     }
 
     protected onDisable(): void {
+        EventMng.off(EventName.EXCHANGE_UI_CLOSED, this.showBottomNode, this);
         if (this.settingButton?.isValid) {
             this.settingButton.node.off(Button.EventType.CLICK, this.onSettingClick, this);
         }
@@ -287,6 +289,8 @@ export class VwUi extends Component {
     protected handleProp(_, propName: string) {
         if (propName === 'exchange') {
             this.exchangeView?.show();
+            this.bottomNode.active = false;
+            EventMng.emit(EventName.EXCHANGE_UI_OPENED);
         } else if (propName === 'undo') {
             this.funlandView.handleUndo();
             this.updateUndoDisplayState();
@@ -302,5 +306,13 @@ export class VwUi extends Component {
                 console.warn('[VwUi] 打开设置失败：Setting 未注册或 SimpleUIManager 未就绪');
             }
         });
+
+
     }
+    protected showBottomNode(): void {
+        if (this.bottomNode?.isValid) {
+            this.bottomNode.active = true;
+        }
+    }
+
 }

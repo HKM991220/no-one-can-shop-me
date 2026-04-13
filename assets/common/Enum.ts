@@ -12,4 +12,8 @@ export enum EventName {
     REWARD_SHORTCUT = "reward:shortcut",
     /** 侧边栏奖励领取成功 */
     REWARD_PROFILE_SIDEBAR = "reward:profileSidebar",
+    /** 兑换道具选择 UI 打开 */
+    EXCHANGE_UI_OPENED = "exchange:opened",
+    /** 兑换道具选择 UI 关闭 */
+    EXCHANGE_UI_CLOSED = "exchange:closed",
 }

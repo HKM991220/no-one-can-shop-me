@@ -60,10 +60,19 @@ export default class TutorialGuide extends Component {
         EventMng.on("tutorial:pour", this.onPour, this);
         EventMng.on("completePour", this.onCompletePour, this);
         EventMng.on("levelPassed", this.onLevelPassed, this);
+        I18n.instance.on(I18n.EVENT_LANGUAGE_CHANGED, this.onI18nLanguageChanged, this);
     }
 
     protected onDisable(): void {
         EventMng.offTarget(this);
+        I18n.instance.off(I18n.EVENT_LANGUAGE_CHANGED, this.onI18nLanguageChanged, this);
+    }
+
+    private onI18nLanguageChanged(): void {
+        if (!this.root?.activeInHierarchy || this.step === TutorialStep.Done) {
+            return;
+        }
+        this.applyStepView();
     }
 
     public beginIfNeeded(): void {

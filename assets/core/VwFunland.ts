@@ -13,6 +13,7 @@ import {WaterColor} from './CwgConstant';
 import Toolkit from "../common/Toolkit";
 import FunlandInfo, { GlassInfo } from './FunlandInfo';
 import EventMng from '../common/EventMng';
+import { EventName } from '../common/Enum';
 import { VwEffect } from './VwEffect';
 import SoundComp from './SoundComp';
 import GlassPourOut from './glass-anims/GlassPourOut';
@@ -51,19 +52,30 @@ export class VwFunland extends Component {
     private selectValidator: ((glass: Glass) => boolean) | null = null;
     private hintedGlasses: [Glass, Glass] | null = null;
     private hintedOriginalScales: Vec3[] = [];
+    /** 交换道具 UI 打开期间不跑 10s 闲置检测、也不因 markUserInteraction 重启计时 */
+    private idleHintSuspendedForExchange = false;
 
     protected onLoad() {
         console.log("StVwFunland")
     }
 
+    protected onEnable(): void {
+        EventMng.on(EventName.EXCHANGE_UI_OPENED, this.pauseIdleHintForExchange, this);
+        EventMng.on(EventName.EXCHANGE_UI_CLOSED, this.resumeIdleHintAfterExchange, this);
+    }
+
     protected onDisable(): void {
+        EventMng.off(EventName.EXCHANGE_UI_OPENED, this.pauseIdleHintForExchange, this);
+        EventMng.off(EventName.EXCHANGE_UI_CLOSED, this.resumeIdleHintAfterExchange, this);
         this.unschedule(this.onIdleTimeout);
         this.clearIdleHint();
+        this.idleHintSuspendedForExchange = false;
     }
 
     // 初始化游乐场布局
     public reset(funland: FunlandInfo) {
         this.funland = funland;
+        this.idleHintSuspendedForExchange = false;
         this.clearIdleHint();
         this.unschedule(this.onIdleTimeout);
 
@@ -305,10 +317,24 @@ export class VwFunland extends Component {
         glass.removeAd();
     }
 
-    public handleRandExchangeColors(glass: Glass) {
-        this.schedule(() => {
+    /**
+     * 交换动画按 0.17s 间隔 schedule，repeat=8 时引擎共执行 repeat+1 次。
+     * @param onComplete 全部 tick 跑完后回调（例如再关 UI）
+     */
+    public handleRandExchangeColors(glass: Glass, onComplete?: () => void) {
+        const interval = 0.17;
+        const repeat = 8;
+        const totalRuns = repeat + 1;
+        let done = 0;
+        const tick = () => {
             glass.randExchangeColors();
-        }, 0.17, 8);
+            done++;
+            if (done >= totalRuns) {
+                this.unschedule(tick);
+                onComplete?.();
+            }
+        };
+        this.schedule(tick, interval, repeat);
     }
 
     public handleUndo() {
@@ -340,7 +366,23 @@ export class VwFunland extends Component {
         }
     }
 
+    private pauseIdleHintForExchange(): void {
+        this.idleHintSuspendedForExchange = true;
+        this.unschedule(this.onIdleTimeout);
+        this.clearIdleHint();
+    }
+
+    private resumeIdleHintAfterExchange(): void {
+        this.idleHintSuspendedForExchange = false;
+        if (!this.finished) {
+            this.markUserInteraction();
+        }
+    }
+
     private markUserInteraction(): void {
+        if (this.idleHintSuspendedForExchange) {
+            return;
+        }
         this.clearIdleHint();
         this.unschedule(this.onIdleTimeout);
         if (!this.finished) {

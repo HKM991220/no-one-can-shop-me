@@ -11,6 +11,9 @@
     "language": "Ngôn ngữ",
     "country": "Quốc gia"
   },
+  "game": {
+    "exchangeTip": "Chạm vào chai để hoán đổi màu nước."
+  },
   "tutorial": {
     "step1": "Chạm vào chai này.",
     "step2": "Bây giờ chạm vào chai này để rót.",

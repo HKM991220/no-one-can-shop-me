@@ -6,7 +6,8 @@
  * @LastEditors: Lioesquieu
  * @LastEditTime:2025-07-20
  */
-import { _decorator, Component, director ,Node} from 'cc';
+import { _decorator, Component, director, Label, Node } from 'cc';
+import { I18n } from '../common/i18n/I18n';
 import { VwFunland } from "./VwFunland";
 import { VwUi } from "./VwUi";
 import CwgState from "./CwgState";
@@ -31,6 +32,18 @@ export class VwPlay extends Component {
     @property(Node)
     protected blockerNode: Node | null = null;
 
+    @property(Node)
+    protected exchangeBlockerNode: Node | null = null;
+
+    @property(Node)
+    protected exchangeTipsNode: Node | null = null;
+
+    @property(Node)
+    protected tipLabel: Node | null = null;
+
+    @property({ tooltip: '兑换提示文案的 i18n 键，对应 resources/i18n/*.json' })
+    protected exchangeTipI18nKey = 'game.exchangeTip';
+
     public funland: FunlandInfo;
     public gameState: CwgState;
 
@@ -41,6 +54,11 @@ export class VwPlay extends Component {
 
     protected onEnable(): void {
         EventMng.on(EventName.GAME_CONCLUDE_NEXT, this.onConcludeNext, this);
+        EventMng.on(EventName.EXCHANGE_UI_OPENED, this.onExchangeUiOpened, this);
+        EventMng.on(EventName.EXCHANGE_UI_CLOSED, this.onExchangeUiClosed, this);
+        this.exchangeBlockerNode.on(Node.EventType.TOUCH_END, this.onExchangeUiClosed, this);
+        I18n.instance.on(I18n.EVENT_LANGUAGE_CHANGED, this.applyExchangeTipLabel, this);
+        this.applyExchangeTipLabel();
         // 面板曾被隐藏再显示时同步存档关卡（教程通关只写了 GlobalPlayerData 时，内存里的 CwgState 可能仍是 0）
         if (this.gameState && this.funland) {
             void this.restartLevel(false);
@@ -49,6 +67,29 @@ export class VwPlay extends Component {
 
     protected onDisable(): void {
         EventMng.off(EventName.GAME_CONCLUDE_NEXT, this.onConcludeNext, this);
+        EventMng.off(EventName.EXCHANGE_UI_OPENED, this.onExchangeUiOpened, this);
+        EventMng.off(EventName.EXCHANGE_UI_CLOSED, this.onExchangeUiClosed, this);
+        this.exchangeBlockerNode.off(Node.EventType.TOUCH_END, this.onExchangeUiClosed, this);
+        I18n.instance.off(I18n.EVENT_LANGUAGE_CHANGED, this.applyExchangeTipLabel, this);
+    }
+
+    private onExchangeUiOpened(): void {
+        this.exchangeBlockerNode.active = true;
+        this.exchangeTipsNode.active = true;
+        this.applyExchangeTipLabel();
+    }
+
+    private applyExchangeTipLabel(): void {
+        const label = this.tipLabel?.getComponent(Label);
+        if (!label?.isValid || !this.exchangeTipI18nKey) {
+            return;
+        }
+        label.string = I18n.instance.t(this.exchangeTipI18nKey);
+    }
+
+    private onExchangeUiClosed(): void {
+        this.exchangeBlockerNode.active = false;
+        this.exchangeTipsNode.active = false;
     }
 
     /**
@@ -58,7 +99,7 @@ export class VwPlay extends Component {
      */
     public syncProgressAndRestart(): void {
         if (!this.canRunRestart()) {
-            return;     
+            return;
         }
         void this.restartLevel(false);
     }
@@ -68,6 +109,7 @@ export class VwPlay extends Component {
      * @returns false 表示体力不足，true 表示已启动或已进入启动队列
      */
     public startRound(): boolean {
+        this.exchangeBlockerNode.active = false;
         if (!this.canStartRound()) {
             this.emitResourceChanged();
             return false;
@@ -161,6 +203,7 @@ export class VwPlay extends Component {
 
                 // 开始游戏
                 this.play.playStart();
+                this.applyExchangeTipLabel();
                 consumeStamina = false;
             } while (this._restartLevelPending);
         } finally {

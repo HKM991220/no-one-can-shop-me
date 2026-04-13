@@ -11,6 +11,9 @@
     "language": "言語",
     "country": "国"
   },
+  "game": {
+    "exchangeTip": "色を入れ替える瓶をタップしてください"
+  },
   "tutorial": {
     "step1": "このボトルをタップ",
     "step2": "次にこのボトルをタップして注ぐ",

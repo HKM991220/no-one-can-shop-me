@@ -10,6 +10,9 @@
     "sound": "Sound",
     "language": "Language"
   },
+  "game": {
+    "exchangeTip": "Tap a bottle to swap its water layers."
+  },
   "tutorial": {
     "step1": "Tap this bottle.",
     "step2": "Now tap this bottle to pour.",
