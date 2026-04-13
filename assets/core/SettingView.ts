@@ -1,344 +1,349 @@
-import { _decorator, Button, Event, Label, Node, Sprite, SpriteFrame, Toggle } from 'cc';
-import { GlobalPlayerData } from '../common/GlobalPlayerData';
-import { SimpleUIBase } from '../common/ui/SimpleUIBase';
-import { SimpleUIManager } from '../common/ui/SimpleUIManager';
-import { UIPanelId } from '../common/ui/UIPanelRegistry';
-import { I18n } from '../common/i18n/I18n';
-import { VwPlay } from './VwPlay';
-import { TTMinis } from '../common/sdk/TTMinis';
+import { _decorator, Button, Event, Label, log, Node, Sprite, SpriteFrame, Toggle } from "cc";
+import { GlobalPlayerData } from "../common/GlobalPlayerData";
+import { SimpleUIBase } from "../common/ui/SimpleUIBase";
+import { SimpleUIManager } from "../common/ui/SimpleUIManager";
+import { UIPanelId } from "../common/ui/UIPanelRegistry";
+import { I18n } from "../common/i18n/I18n";
+import { VwPlay } from "./VwPlay";
+import { TTMinis } from "../common/sdk/TTMinis";
 
 const { ccclass, menu, property } = _decorator;
 
 /**
  * 设置页：音乐/音效开关；语言通过国旗 Toggle 切换（与 I18n + GlobalPlayerData 同步）。
  */
-@ccclass('SettingView')
-@menu('cwg/SettingView')
+@ccclass("SettingView")
+@menu("cwg/SettingView")
 export default class SettingView extends SimpleUIBase {
-    @property(Toggle)
-    protected soundToggle: Toggle | null = null;
+	@property(Toggle)
+	protected soundToggle: Toggle | null = null;
 
-    @property(Toggle)
-    protected effectToggle: Toggle | null = null;
+	@property(Toggle)
+	protected effectToggle: Toggle | null = null;
 
-    @property(Label)
-    protected countryLabel: Label | null = null;
+	@property(Label)
+	protected countryLabel: Label | null = null;
 
-    @property(Sprite)
-    protected countrySp: Sprite | null = null;
+	@property(Sprite)
+	protected countrySp: Sprite | null = null;
 
-    @property(SpriteFrame)
-    protected flagZhHans: SpriteFrame | null = null;
+	@property(SpriteFrame)
+	protected flagZhHans: SpriteFrame | null = null;
 
-    @property(SpriteFrame)
-    protected flagEn: SpriteFrame | null = null;
+	@property(SpriteFrame)
+	protected flagEn: SpriteFrame | null = null;
 
-    @property(SpriteFrame)
-    protected flagJa: SpriteFrame | null = null;
+	@property(SpriteFrame)
+	protected flagJa: SpriteFrame | null = null;
 
-    @property(SpriteFrame)
-    protected flagZhHant: SpriteFrame | null = null;
+	@property(SpriteFrame)
+	protected flagZhHant: SpriteFrame | null = null;
 
-    @property(SpriteFrame)
-    protected flagVi: SpriteFrame | null = null;
+	@property(SpriteFrame)
+	protected flagVi: SpriteFrame | null = null;
 
-    @property(Node)
-    protected countryNode: Node | null = null;
+	@property(Node)
+	protected countryNode: Node | null = null;
 
-    /** 绑定 `country/ToggleGroup`（子节点名为 zh-Hans、en、ja、zh-Hant、vi，各挂 Toggle） */
-    @property(Node)
-    protected languageToggleGroup: Node | null = null;
+	/** 绑定 `country/ToggleGroup`（子节点名为 zh-Hans、en、ja、zh-Hant、vi，各挂 Toggle） */
+	@property(Node)
+	protected languageToggleGroup: Node | null = null;
 
-    /** 绑定 country 下的关闭按钮（可选） */
-    @property(Button)
-    protected countryCloseButton: Button | null = null;
+	/** 绑定 country 下的关闭按钮（可选） */
+	@property(Button)
+	protected countryCloseButton: Button | null = null;
 
-    @property(Button)
-    protected homeButton: Button | null = null;
+	@property(Button)
+	protected homeButton: Button | null = null;
 
-    private _syncingUi = false;
-    private _syncingLang = false;
+	@property(Button)
+	protected startButton: Button | null = null;
 
-    protected onEnable(): void {
-        I18n.instance.on(I18n.EVENT_LANGUAGE_CHANGED, this.onLanguageChanged, this);
-        this.refreshLanguageUi();
-    }
+	private _syncingUi = false;
+	private _syncingLang = false;
 
-    protected onDisable(): void {
-        I18n.instance.off(I18n.EVENT_LANGUAGE_CHANGED, this.onLanguageChanged, this);
-    }
+	protected onEnable(): void {
+		I18n.instance.on(I18n.EVENT_LANGUAGE_CHANGED, this.onLanguageChanged, this);
+		this.refreshLanguageUi();
+	}
 
-    private onLanguageChanged(): void {
-        this.refreshLanguageUi();
-    }
+	protected onDisable(): void {
+		I18n.instance.off(I18n.EVENT_LANGUAGE_CHANGED, this.onLanguageChanged, this);
+	}
 
-    private refreshLanguageUi(): void {
-        this.refreshText();
-        this.refreshCountryFlag();
-        this.syncLanguageTogglesFromI18n();
-    }
+	private onLanguageChanged(): void {
+		this.refreshLanguageUi();
+	}
 
-    private refreshText(): void {
-        if (this.countryLabel?.isValid) {
-            this.countryLabel.string = I18n.instance.t('settings.language');
-        }
-    }
+	private refreshLanguageUi(): void {
+		this.refreshText();
+		this.refreshCountryFlag();
+		this.syncLanguageTogglesFromI18n();
+	}
 
-    private refreshCountryFlag(): void {
-        if (!this.countrySp?.isValid) {
-            return;
-        }
-        const frame = this.getFlagByLocale(I18n.instance.locale);
-        if (frame) {
-            this.countrySp.spriteFrame = frame;
-        }
-    }
+	private refreshText(): void {
+		if (this.countryLabel?.isValid) {
+			this.countryLabel.string = I18n.instance.t("settings.language");
+		}
+	}
 
-    private getFlagByLocale(locale: string): SpriteFrame | null {
-        if (locale === 'en') {
-            return this.flagEn;
-        }
-        if (locale === 'ja') {
-            return this.flagJa;
-        }
-        if (locale === 'zh-Hant') {
-            return this.flagZhHant;
-        }
-        if (locale === 'vi') {
-            return this.flagVi;
-        }
-        return this.flagZhHans;
-    }
+	private refreshCountryFlag(): void {
+		if (!this.countrySp?.isValid) {
+			return;
+		}
+		const frame = this.getFlagByLocale(I18n.instance.locale);
+		if (frame) {
+			this.countrySp.spriteFrame = frame;
+		}
+	}
 
-    /** 打开语言面板：可将「语言」行按钮绑到此方法 */
-    public showCountry(): void {
-        if (this.countryNode?.isValid) {
-            this.countryNode.active = true;
-            this.syncLanguageTogglesFromI18n();
-        }
-    }
+	private getFlagByLocale(locale: string): SpriteFrame | null {
+		if (locale === "en") {
+			return this.flagEn;
+		}
+		if (locale === "ja") {
+			return this.flagJa;
+		}
+		if (locale === "zh-Hant") {
+			return this.flagZhHant;
+		}
+		if (locale === "vi") {
+			return this.flagVi;
+		}
+		return this.flagZhHans;
+	}
 
-    public closeCountry(): void {
-        if (this.countryNode?.isValid) {
-            this.countryNode.active = false;
-        }
-    }
+	/** 打开语言面板：可将「语言」行按钮绑到此方法 */
+	public showCountry(): void {
+		if (this.countryNode?.isValid) {
+			this.countryNode.active = true;
+			this.syncLanguageTogglesFromI18n();
+		}
+	}
 
-    /** 关闭语言面板按钮 */
-    public onCloseCountryClick(): void {
-        this.closeCountry();
-    }
+	public closeCountry(): void {
+		if (this.countryNode?.isValid) {
+			this.countryNode.active = false;
+		}
+	}
 
-    public onCloseClick(): void {
-        SimpleUIManager.instance.close(UIPanelId.SETTING);
-    }
+	/** 关闭语言面板按钮 */
+	public onCloseCountryClick(): void {
+		this.closeCountry();
+	}
 
-    protected onUIOpen(): void {
-        this.refreshFromSettings();
-        this.bindControls();
-        this.refreshLanguageUi();
-    }
+	public onCloseClick(): void {
+		SimpleUIManager.instance.close(UIPanelId.SETTING);
+	}
 
-    protected offButtonListeners(): void {
-        this.unbindControls();
-    }
+	protected onUIOpen(data?: boolean): void {
+		super.onUIOpen(data);
+		this.startButton.node.active = data
+		this.homeButton.node.active = data
 
-    private refreshFromSettings(): void {
-        this._syncingUi = true;
-        try {
-            const data = GlobalPlayerData.instance;
-            if (this.soundToggle) {
-                this.soundToggle.isChecked = data.isMusicEnabled();
-            }
-            if (this.effectToggle) {
-                this.effectToggle.isChecked = data.isSfxEnabled();
-            }
-        } finally {
-            this._syncingUi = false;
-        }
-    }
+		this.refreshFromSettings();
+		this.bindControls();
+		this.refreshLanguageUi();
+	}
 
-    private bindControls(): void {
-        if (this.soundToggle) {
-            this.soundToggle.node.on(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
-            this.soundToggle.node.on(Button.EventType.CLICK, this.onSoundToggleNodeClick, this);
-            this.soundToggle.node.on(Node.EventType.TOUCH_END, this.onSoundToggleNodeTouchEnd, this);
-        }
-        if (this.effectToggle) {
-            this.effectToggle.node.on(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
-            this.effectToggle.node.on(Button.EventType.CLICK, this.onEffectToggleNodeClick, this);
-            this.effectToggle.node.on(Node.EventType.TOUCH_END, this.onEffectToggleNodeTouchEnd, this);
-        }
-        this.bindLanguageToggles();
-        if (this.countryCloseButton?.node?.isValid) {
-            this.countryCloseButton.node.on(Button.EventType.CLICK, this.onCloseCountryClick, this);
-        }
-    }
+	protected offButtonListeners(): void {
+		this.unbindControls();
+	}
 
-    private unbindControls(): void {
-        if (this.soundToggle?.isValid) {
-            this.soundToggle.node.off(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
-            this.soundToggle.node.off(Button.EventType.CLICK, this.onSoundToggleNodeClick, this);
-            this.soundToggle.node.off(Node.EventType.TOUCH_END, this.onSoundToggleNodeTouchEnd, this);
-        }
-        if (this.effectToggle?.isValid) {
-            this.effectToggle.node.off(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
-            this.effectToggle.node.off(Button.EventType.CLICK, this.onEffectToggleNodeClick, this);
-            this.effectToggle.node.off(Node.EventType.TOUCH_END, this.onEffectToggleNodeTouchEnd, this);
-        }
-        this.unbindLanguageToggles();
-        if (this.countryCloseButton?.node?.isValid) {
-            this.countryCloseButton.node.off(Button.EventType.CLICK, this.onCloseCountryClick, this);
-        }
-    }
+	private refreshFromSettings(): void {
+		this._syncingUi = true;
+		try {
+			const data = GlobalPlayerData.instance;
+			if (this.soundToggle) {
+				this.soundToggle.isChecked = data.isMusicEnabled();
+			}
+			if (this.effectToggle) {
+				this.effectToggle.isChecked = data.isSfxEnabled();
+			}
+		} finally {
+			this._syncingUi = false;
+		}
+	}
 
-    private bindLanguageToggles(): void {
-        const root = this.languageToggleGroup;
-        if (!root?.isValid) {
-            return;
-        }
-        for (const child of root.children) {
-            const tg = child.getComponent(Toggle);
-            if (tg) {
-                tg.node.on(Toggle.EventType.TOGGLE, this.onLanguageToggle, this);
-            }
-        }
-    }
+	private bindControls(): void {
+		if (this.soundToggle) {
+			this.soundToggle.node.on(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
+			this.soundToggle.node.on(Button.EventType.CLICK, this.onSoundToggleNodeClick, this);
+			this.soundToggle.node.on(Node.EventType.TOUCH_END, this.onSoundToggleNodeTouchEnd, this);
+		}
+		if (this.effectToggle) {
+			this.effectToggle.node.on(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
+			this.effectToggle.node.on(Button.EventType.CLICK, this.onEffectToggleNodeClick, this);
+			this.effectToggle.node.on(Node.EventType.TOUCH_END, this.onEffectToggleNodeTouchEnd, this);
+		}
+		this.bindLanguageToggles();
+		if (this.countryCloseButton?.node?.isValid) {
+			this.countryCloseButton.node.on(Button.EventType.CLICK, this.onCloseCountryClick, this);
+		}
+	}
 
-    private unbindLanguageToggles(): void {
-        const root = this.languageToggleGroup;
-        if (!root?.isValid) {
-            return;
-        }
-        for (const child of root.children) {
-            const tg = child.getComponent(Toggle);
-            if (tg) {
-                tg.node.off(Toggle.EventType.TOGGLE, this.onLanguageToggle, this);
-            }
-        }
-    }
+	private unbindControls(): void {
+		if (this.soundToggle?.isValid) {
+			this.soundToggle.node.off(Toggle.EventType.TOGGLE, this.onSoundToggle, this);
+			this.soundToggle.node.off(Button.EventType.CLICK, this.onSoundToggleNodeClick, this);
+			this.soundToggle.node.off(Node.EventType.TOUCH_END, this.onSoundToggleNodeTouchEnd, this);
+		}
+		if (this.effectToggle?.isValid) {
+			this.effectToggle.node.off(Toggle.EventType.TOGGLE, this.onEffectToggle, this);
+			this.effectToggle.node.off(Button.EventType.CLICK, this.onEffectToggleNodeClick, this);
+			this.effectToggle.node.off(Node.EventType.TOUCH_END, this.onEffectToggleNodeTouchEnd, this);
+		}
+		this.unbindLanguageToggles();
+		if (this.countryCloseButton?.node?.isValid) {
+			this.countryCloseButton.node.off(Button.EventType.CLICK, this.onCloseCountryClick, this);
+		}
+	}
 
-    /** 根据当前 I18n 语言勾选对应 Toggle，不触发 setLocale */
-    private syncLanguageTogglesFromI18n(): void {
-        const root = this.languageToggleGroup;
-        if (!root?.isValid) {
-            return;
-        }
-        const locale = I18n.instance.locale;
-        this._syncingLang = true;
-        try {
-            for (const child of root.children) {
-                const tg = child.getComponent(Toggle);
-                if (tg) {
-                    tg.isChecked = child.name === locale;
-                }
-            }
-        } finally {
-            this._syncingLang = false;
-        }
-    }
+	private bindLanguageToggles(): void {
+		const root = this.languageToggleGroup;
+		if (!root?.isValid) {
+			return;
+		}
+		for (const child of root.children) {
+			const tg = child.getComponent(Toggle);
+			if (tg) {
+				tg.node.on(Toggle.EventType.TOGGLE, this.onLanguageToggle, this);
+			}
+		}
+	}
 
-    private resolveToggleChecked(input: Toggle | Event): boolean | null {
-        if (input instanceof Toggle) {
-            return input.isChecked;
-        }
-        const target = (input.currentTarget as Node | null) ?? null;
-        const tg = target?.getComponent(Toggle) ?? null;
-        return tg ? tg.isChecked : null;
-    }
+	private unbindLanguageToggles(): void {
+		const root = this.languageToggleGroup;
+		if (!root?.isValid) {
+			return;
+		}
+		for (const child of root.children) {
+			const tg = child.getComponent(Toggle);
+			if (tg) {
+				tg.node.off(Toggle.EventType.TOGGLE, this.onLanguageToggle, this);
+			}
+		}
+	}
 
-    private onLanguageToggle(input: Toggle | Event): void {
-        if (this._syncingLang) {
-            return;
-        }
-        const checked = this.resolveToggleChecked(input);
-        if (checked !== true) {
-            return;
-        }
-        const node = input instanceof Toggle ? input.node : ((input.currentTarget as Node | null) ?? null);
-        const localeId = node?.name ?? '';
-        if (!localeId) {
-            return;
-        }
-        void I18n.instance.setLocale(localeId).then(() => {
-            this.closeCountry();
-        });
-    }
+	/** 根据当前 I18n 语言勾选对应 Toggle，不触发 setLocale */
+	private syncLanguageTogglesFromI18n(): void {
+		const root = this.languageToggleGroup;
+		if (!root?.isValid) {
+			return;
+		}
+		const locale = I18n.instance.locale;
+		this._syncingLang = true;
+		try {
+			for (const child of root.children) {
+				const tg = child.getComponent(Toggle);
+				if (tg) {
+					tg.isChecked = child.name === locale;
+				}
+			}
+		} finally {
+			this._syncingLang = false;
+		}
+	}
 
+	private resolveToggleChecked(input: Toggle | Event): boolean | null {
+		if (input instanceof Toggle) {
+			return input.isChecked;
+		}
+		const target = (input.currentTarget as Node | null) ?? null;
+		const tg = target?.getComponent(Toggle) ?? null;
+		return tg ? tg.isChecked : null;
+	}
 
+	private onLanguageToggle(input: Toggle | Event): void {
+		if (this._syncingLang) {
+			return;
+		}
+		const checked = this.resolveToggleChecked(input);
+		if (checked !== true) {
+			return;
+		}
+		const node = input instanceof Toggle ? input.node : ((input.currentTarget as Node | null) ?? null);
+		const localeId = node?.name ?? "";
+		if (!localeId) {
+			return;
+		}
+		void I18n.instance.setLocale(localeId).then(() => {
+			this.closeCountry();
+		});
+	}
 
-    private onSoundToggle(input: Toggle | Event): void {
-        if (this._syncingUi) {
-            return;
-        }
-        const checked = this.resolveToggleChecked(input);
-        if (checked === null) {
-            return;
-        }
-        GlobalPlayerData.instance.setMusicEnabled(checked);
-    }
+	private onSoundToggle(input: Toggle | Event): void {
+		if (this._syncingUi) {
+			return;
+		}
+		const checked = this.resolveToggleChecked(input);
+		if (checked === null) {
+			return;
+		}
+		GlobalPlayerData.instance.setMusicEnabled(checked);
+	}
 
-    private onSoundToggleNodeClick(): void {
-        this.syncMusicFromToggleState();
-    }
+	private onSoundToggleNodeClick(): void {
+		this.syncMusicFromToggleState();
+	}
 
-    private onSoundToggleNodeTouchEnd(): void {
-        this.syncMusicFromToggleState();
-    }
+	private onSoundToggleNodeTouchEnd(): void {
+		this.syncMusicFromToggleState();
+	}
 
-    private syncMusicFromToggleState(): void {
-        if (this._syncingUi || !this.soundToggle?.isValid) {
-            return;
-        }
-        GlobalPlayerData.instance.setMusicEnabled(this.soundToggle.isChecked);
-    }
+	private syncMusicFromToggleState(): void {
+		if (this._syncingUi || !this.soundToggle?.isValid) {
+			return;
+		}
+		GlobalPlayerData.instance.setMusicEnabled(this.soundToggle.isChecked);
+	}
 
-    private onEffectToggle(input: Toggle | Event): void {
-        if (this._syncingUi) {
-            return;
-        }
-        const checked = this.resolveToggleChecked(input);
-        if (checked === null) {
-            return;
-        }
-        GlobalPlayerData.instance.setSfxEnabled(checked);
-    }
+	private onEffectToggle(input: Toggle | Event): void {
+		if (this._syncingUi) {
+			return;
+		}
+		const checked = this.resolveToggleChecked(input);
+		if (checked === null) {
+			return;
+		}
+		GlobalPlayerData.instance.setSfxEnabled(checked);
+	}
 
-    private onEffectToggleNodeClick(): void {
-        this.syncSfxFromToggleState();
-    }
+	private onEffectToggleNodeClick(): void {
+		this.syncSfxFromToggleState();
+	}
 
-    private onEffectToggleNodeTouchEnd(): void {
-        this.syncSfxFromToggleState();
-    }
+	private onEffectToggleNodeTouchEnd(): void {
+		this.syncSfxFromToggleState();
+	}
 
-    private syncSfxFromToggleState(): void {
-        if (this._syncingUi || !this.effectToggle?.isValid) {
-            return;
-        }
-        GlobalPlayerData.instance.setSfxEnabled(this.effectToggle.isChecked);
-    }
+	private syncSfxFromToggleState(): void {
+		if (this._syncingUi || !this.effectToggle?.isValid) {
+			return;
+		}
+		GlobalPlayerData.instance.setSfxEnabled(this.effectToggle.isChecked);
+	}
 
-    private onHomeClick(): void {
-        SimpleUIManager.instance.open(UIPanelId.SALA);
-        SimpleUIManager.instance.close(UIPanelId.SETTING);
-    }
+	private onHomeClick(): void {
+		SimpleUIManager.instance.open(UIPanelId.SALA);
+		SimpleUIManager.instance.close(UIPanelId.SETTING);
+	}
 
-    // 重开
-    protected onRestartClick(): void {
-        const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
-        const vw = gameRoot?.getComponentInChildren(VwPlay);
-        if (vw?.isValid) {
-            if (!vw.canStartRound()) {
-                TTMinis.ensureInitialized().toast('体力不足');
-                return;
-            }
-            SimpleUIManager.instance.close(UIPanelId.SETTING);
-            vw.startRound();
-            return;
-        }
-    }
-    private closeView(): void {
-        SimpleUIManager.instance.close(UIPanelId.SETTING);
-    }
+	// 重开
+	protected onRestartClick(): void {
+		const gameRoot = SimpleUIManager.instance.getNode(UIPanelId.GAME);
+		const vw = gameRoot?.getComponentInChildren(VwPlay);
+		if (vw?.isValid) {
+			if (!vw.canStartRound()) {
+				TTMinis.ensureInitialized().toast("体力不足");
+				return;
+			}
+			SimpleUIManager.instance.close(UIPanelId.SETTING);
+			vw.startRound();
+			return;
+		}
+	}
+	private closeView(): void {
+		SimpleUIManager.instance.close(UIPanelId.SETTING);
+	}
 }

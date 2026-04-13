@@ -108,7 +108,6 @@ export default class SalaView extends SimpleUIBase {
 			this,
 		);
 		this.btnShare?.on(Button.EventType.CLICK, this.onShareClick, this);
-		this.btnPay?.on(Button.EventType.CLICK, this.onPayClick, this);
 		this.btnAddGold?.on(Button.EventType.CLICK, this.onAddGoldClick, this);
 		this.btnSubGold?.on(Button.EventType.CLICK, this.onSubGoldClick, this);
 		this.btnAddPower?.on(Button.EventType.CLICK, this.onAddPowerClick, this);
@@ -127,7 +126,6 @@ export default class SalaView extends SimpleUIBase {
 			this,
 		);
 		this.btnShare?.off(Button.EventType.CLICK, this.onShareClick, this);
-		this.btnPay?.off(Button.EventType.CLICK, this.onPayClick, this);
 		this.btnAddGold?.off(Button.EventType.CLICK, this.onAddGoldClick, this);
 		this.btnSubGold?.off(Button.EventType.CLICK, this.onSubGoldClick, this);
 		this.btnAddPower?.off(Button.EventType.CLICK, this.onAddPowerClick, this);
@@ -168,28 +166,45 @@ export default class SalaView extends SimpleUIBase {
 		this.notifyResourceChanged();
 	}
 
+
+
 	// 激励视频
+	// onRewardedAdClick() {
+	// 	const player = GlobalPlayerData.instance;
+	// 	if (player.stamina >= player.staminaMax) {
+	// 		this.tt().toast("体力已满");
+	// 		return;
+	// 	}
+	// 	const remainBefore = this.getTodayVideoRewardRemain();
+	// 	if (remainBefore <= 0) {
+	// 		this.tt().toast("今日体力视频次数已用完");
+	// 		return;
+	// 	}
+	// 	const sdk = this.tt();
+	// 	sdk.showRewarded(
+	// 		() => {
+	// 			const remain = this.tryGrantStaminaByVideo();
+	// 			if (remain < 0) {
+	// 				sdk.toast("今日体力视频次数已用完");
+	// 				return;
+	// 			}
+	// 			console.log("✅ 广告看完，恢复体力");
+	// 			sdk.toast(`体力+${GameplayConst.STAMINA_PER_REWARDED_AD}（今日剩余${remain}次）`);
+	// 		},
+	// 		() => {
+	// 			console.log("用户跳过广告");
+	// 			sdk.toast("未看完广告，无奖励");
+	// 		},
+	// 	);
+	// }
+
 	onRewardedAdClick() {
 		const player = GlobalPlayerData.instance;
-		if (player.stamina >= player.staminaMax) {
-			this.tt().toast("体力已满");
-			return;
-		}
-		const remainBefore = this.getTodayVideoRewardRemain();
-		if (remainBefore <= 0) {
-			this.tt().toast("今日体力视频次数已用完");
-			return;
-		}
 		const sdk = this.tt();
 		sdk.showRewarded(
 			() => {
-				const remain = this.tryGrantStaminaByVideo();
-				if (remain < 0) {
-					sdk.toast("今日体力视频次数已用完");
-					return;
-				}
-				console.log("✅ 广告看完，恢复体力");
-				sdk.toast(`体力+${GameplayConst.STAMINA_PER_REWARDED_AD}（今日剩余${remain}次）`);
+				console.log("广告看完");
+
 			},
 			() => {
 				console.log("用户跳过广告");
@@ -269,23 +284,6 @@ export default class SalaView extends SimpleUIBase {
 				console.log("分享调用失败", err);
 				sdk.toast("分享调用失败");
 			});
-	}
-
-	// 支付
-	async onPayClick() {
-		const sdk = this.tt();
-		try {
-			sdk.toast("正在发起支付...");
-
-			// 金额单位：分  10 = 0.1元
-			const res = await sdk.requestPayment(10, "金币x10");
-
-			sdk.toast("支付成功！");
-			console.log("支付结果", res);
-		} catch (err) {
-			console.log("支付不支持/失败:", err);
-			sdk.toast("暂不支持支付");
-		}
 	}
 
 	// 按钮点击事件：桌面奖励

@@ -35,33 +35,12 @@ export class Mian extends Component {
     })
     protected loadingNode: Node | null = null;
 
-    @property({ type: Button })
-    protected btnSetting: Button | null = null;
-
-    @property({ type: Label, tooltip: "金币" })
-    protected labelGold: Label | null = null;
-
-    @property({ type: Label, tooltip: "体力" })
-    protected labelStamina: Label | null = null;
-
     /**
      * 除 `resources`（已在 GameBootstrap / ResManager.ensureReady 中加载）外，
      * 首屏需 `loadBundle` 完成的包名，与 assets 里勾选为 Asset Bundle 的文件夹名一致。
      */
     private static readonly ENTRY_BUNDLE_NAMES: readonly string[] = [];
     private static readonly STAMINA_REFRESH_INTERVAL_SEC = 1;
-
-    protected onEnable(): void {
-        this.btnSetting?.node.on(Button.EventType.CLICK, this.onSettingClick, this);
-        EventMng.on(EventName.PLAYER_RESOURCE_CHANGED, this.initUI, this);
-        this.schedule(this.onStaminaTick, Mian.STAMINA_REFRESH_INTERVAL_SEC);
-    }
-
-    protected onDisable(): void {
-        this.btnSetting?.node.off(Button.EventType.CLICK, this.onSettingClick, this);
-        EventMng.off(EventName.PLAYER_RESOURCE_CHANGED, this.initUI, this);
-        this.unschedule(this.onStaminaTick);
-    }
 
     protected async start(): Promise<void> {
         if (this.loadingNode?.isValid) {
@@ -83,8 +62,6 @@ export class Mian extends Component {
         const res = GameBootstrap.instance.res;
         await Promise.all([...Mian.ENTRY_BUNDLE_NAMES.map((name) => res.loadBundle(name)), ...UI_PANEL_PRELOAD_IDS.map((id) => SimpleUIManager.instance.preload(id)), Mian.autoLoginDuringLoad()]);
 
-        this.initUI();
-
         if (this.loadingNode?.isValid) {
             this.loadingNode.active = false;
             if (GlobalPlayerData.instance.level === 0) {
@@ -99,36 +76,6 @@ export class Mian extends Component {
         }
     }
 
-    initUI(): void {
-        const playerData = GlobalPlayerData.instance;
-        this.topNode.active = playerData.level === 0 ? false : true;
-        if (this.labelGold?.isValid) {
-            this.labelGold.string = `${playerData.coins}`;
-        }
-        if (this.labelStamina?.isValid) {
-            if (playerData.stamina >= playerData.staminaMax) {
-                this.labelStamina.string = `${playerData.stamina}`;
-            } else {
-                const remainMs = playerData.getNextStaminaRecoverRemainMs();
-                this.labelStamina.string = this.formatRemainMs(remainMs);
-            }
-        }
-    }
-
-    private onStaminaTick = (): void => {
-        this.initUI();
-    };
-
-    private formatRemainMs(ms: number): string {
-        const totalSec = Math.max(0, Math.ceil(ms / 1000));
-        const min = Math.floor(totalSec / 60);
-        const sec = totalSec % 60;
-        const secStr = sec < 10 ? `0${sec}` : `${sec}`;
-        return `${min}:${secStr}`;
-    }
-
-
-
     /** 与 LoadingView.tryAutoLogin 一致：加载阶段静默登录；非抖音/失败不阻塞进游戏 */
     private static async autoLoginDuringLoad(): Promise<void> {
         try {
@@ -137,12 +84,6 @@ export class Mian extends Component {
         } catch (err) {
             console.log("[Mian] 加载阶段自动登录跳过或失败", err);
         }
-    }
-
-    private onSettingClick(): void {
-        void SimpleUIManager.instance.open(UIPanelId.SETTING, undefined, {
-            pushToStack: false,
-        });
     }
 
     protected onDestroy(): void {
